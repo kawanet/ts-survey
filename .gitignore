@@ -1,0 +1,10 @@
+.DS_Store
+.idea/
+.npmrc
+*.log
+*.swp
+*.tgz
+*~
+._*
+node_modules/
+tmp/

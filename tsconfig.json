@@ -1,0 +1,27 @@
+{
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "src/",
+    "sample/"
+  ],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": false,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "removeComments": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "sourceMap": false,
+    "strictNullChecks": false,
+    "target": "ES2022"
+  }
+}
