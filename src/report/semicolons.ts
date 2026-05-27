@@ -2,7 +2,6 @@
 // statements, bucketed in 10% increments. Helps decide which direction
 // minimizes churn when standardizing on insert or remove.
 
-import path from "node:path";
 import type {Project} from "ts-morph";
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts";
@@ -51,7 +50,7 @@ export async function runReportSemicolons(project: Project, stream: Writer, {abs
     });
   }
 
-  const bucketFiles: PerFile[][] = BUCKETS.map(() => []);
+  const bucketFiles: PerFile[][] = BUCKETS.map((): PerFile[] => []);
   for (const f of perFile) {
     const idx = BUCKETS.findIndex((b) => b.test(f.percent));
     bucketFiles[idx].push(f);
