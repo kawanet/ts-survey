@@ -7,7 +7,7 @@ import type {Project} from "ts-morph"
 import {Node} from "ts-morph"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
-import type {ReportOpts} from "../lib/types.ts"
+import type {ReportOpts} from "./types.ts"
 
 export async function runReportUnusedExports(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<void> {
     // Skip .d.ts: type declaration files are external-consumption surfaces by definition.

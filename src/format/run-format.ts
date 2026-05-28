@@ -9,11 +9,13 @@
 // swaps the report stream for a sink so the Markdown body doesn't mix
 // into the formatted output.
 
-import type {TsSurveyReport} from "@kawanet/ts-survey"
+import type {RunReportsOpts, TsSurveyReport} from "@kawanet/ts-survey"
 
 import {writePrettierConfig} from "../lib/format-prettier.ts"
 import {writeTsSurveyCommand} from "../lib/format-ts-survey.ts"
-import type {Writer} from "../lib/writable.ts"
+
+// Local alias for readability — not exported.
+type Writer = RunReportsOpts["stream"]
 
 export const formatNames = ["prettier", "ts-survey"] as const
 

@@ -16,10 +16,12 @@
 // Reports that didn't recommend anything contribute no fields, so an
 // empty TsSurveyReport renders as `{}`.
 
-import type {TsSurveyReport} from "@kawanet/ts-survey"
+import type {RunReportsOpts, TsSurveyReport} from "@kawanet/ts-survey"
 import type {Options as PrettierOptions} from "prettier"
 
-import type {Writer} from "./writable.ts"
+// Local alias derived from the published shape — not exported, kept
+// solely to keep the signatures below readable.
+type Writer = RunReportsOpts["stream"]
 
 // Collects the recommendations that fired into a PrettierOptions object.
 // Shared by the raw --format prettier output and the .prettierrc fence

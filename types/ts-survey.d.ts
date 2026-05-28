@@ -6,56 +6,37 @@ import type {Project} from "ts-morph";
 
 export {}; // external module indicator
 
-// Internal sink contract used by report writers. Consumers never construct
-// or name this directly; they pass `process.stdout` or any object with a
-// `write(line)` method as `RunReportsOpts.stream`.
-type Writer = {write: (line: string) => void}
-
-// Common base for every entry. Not exported — consumers reach the fields
-// through the leaf Opts interfaces below.
+// Common base for every entry. Leaf Opts interfaces inherit it.
 interface TsSurveyOpts {
     absIncludes: string[]
     absExcludes: string[]
 }
 
-export interface RunOrganizeImportsOpts extends TsSurveyOpts {
-    dryRun: boolean
-}
+// Recommendation shapes. Not runtime inputs — they describe the value
+// type of each `TsSurveyReport` slot.
 
-export interface RunSemicolonsOpts extends RunOrganizeImportsOpts {
+export interface RunSemicolonsOpts {
     semicolons: "on" | "off"
 }
 
-export interface RunIndentOpts extends RunOrganizeImportsOpts {
+export interface RunIndentOpts {
     width: number
 }
 
-// `runMemberSeparators` isn't implemented yet; the Opts interface exists
-// so the matching report can return its recommendation in the same
-// Partial<RunXxxOpts> shape every other report uses, and so the
-// formatters (`--format prettier`, `--format ts-survey`) can already
-// translate the recommendation into output.
-export interface RunMemberSeparatorsOpts extends RunOrganizeImportsOpts {
+export interface RunMemberSeparatorsOpts {
     separator: "semi" | "comma" | "none"
 }
 
-// `runNewLine` action isn't implemented yet — same arrangement as
-// RunMemberSeparatorsOpts: the report returns this shape so the
-// formatters can already render `--new-line <value>` and `endOfLine`.
-export interface RunNewLineOpts extends RunOrganizeImportsOpts {
+export interface RunNewLineOpts {
     newLine: "lf" | "crlf" | "cr"
 }
 
-// `runBracketSpacing` action isn't implemented yet. The report returns
-// the Partial so the formatters can render `--bracket-spacing on|off`
-// and Prettier's `bracketSpacing`.
-export interface RunBracketSpacingOpts extends RunOrganizeImportsOpts {
+export interface RunBracketSpacingOpts {
     bracketSpacing: "on" | "off"
 }
 
-// Every report module that runReports knows about. Adding a report
-// means extending this union, the runtime list in
-// src/report/report-names.ts, and the dispatch in src/report/run-reports.ts.
+// Every report runReports knows about. Pair with src/report/report-names.ts
+// (runtime list) and src/report/run-reports.ts (dispatch).
 export type TsSurveyReportName =
     | "unused-exports"
     | "semicolons"
@@ -65,14 +46,12 @@ export type TsSurveyReportName =
     | "bracket-spacing"
 
 export interface RunReportsOpts extends TsSurveyOpts {
-    stream: Writer
+    stream: {write: (line: string) => void}
     reportNames: TsSurveyReportName[]
 }
 
-// Recommendations collected by runReports, keyed by the report that
-// produced them. Each value is the partial of the matching action's
-// Opts that the report would suggest applying; missing keys mean the
-// report didn't run or had nothing to recommend.
+// Per-report recommendations. A missing key means the report didn't run
+// or had nothing to recommend.
 export interface TsSurveyReport {
     semicolons?: Partial<RunSemicolonsOpts>
     indent?: Partial<RunIndentOpts>
@@ -81,12 +60,22 @@ export interface TsSurveyReport {
     bracketSpacing?: Partial<RunBracketSpacingOpts>
 }
 
+// Input to `runApply`. `report` provides defaults; the top-level
+// overrides win per field. `organizeImports` defaults to "on".
+export interface RunApplyOpts extends TsSurveyOpts {
+    dryRun: boolean
+    report: TsSurveyReport
+    organizeImports?: "on" | "off"
+    indent?: number
+    semicolons?: "on" | "off"
+    // LS `newLineCharacter` only accepts \n / \r\n; a `cr` recommendation
+    // is logged but not applied.
+    newLine?: "lf" | "crlf"
+    bracketSpacing?: "on" | "off"
+}
+
 export declare function initProject(tsconfigPath: string): Project
 
-export declare function runOrganizeImports(project: Project, opts: RunOrganizeImportsOpts): Promise<void>
-
-export declare function runSemicolons(project: Project, opts: RunSemicolonsOpts): Promise<void>
-
-export declare function runIndent(project: Project, opts: RunIndentOpts): Promise<void>
-
 export declare function runReports(project: Project, opts: RunReportsOpts): Promise<TsSurveyReport>
+
+export declare function runApply(project: Project, opts: RunApplyOpts): Promise<void>

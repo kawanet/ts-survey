@@ -17,12 +17,14 @@ function quiet<T>(fn: () => T): T {
 }
 
 describe("parseArgs", () => {
-    it("recognises --organize-imports as a write action", () => {
-        const r = parseArgs(["--organize-imports", "-p", SAMPLE_TSCONFIG])
+    it("recognises --apply as a write-mode trigger and feeds every registered report", () => {
+        const r = parseArgs(["--apply", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
-        assert.equal(r.organizeImports, true)
-        assert.equal(r.semicolons, null)
-        assert.equal(r.reportNames.length, 0)
+        assert.equal(r.apply, true)
+        assert.deepEqual(r.applyOverrides, {})
+        // --apply consumes the full recommendation set; every report runs.
+        assert.ok(r.reportNames.includes("unused-exports"))
+        assert.ok(r.reportNames.includes("semicolons"))
     })
 
     it("accepts comma-separated --report names with de-duplication", () => {
@@ -50,7 +52,7 @@ describe("parseArgs", () => {
     })
 
     it("resolves include/exclude globs against the tsconfig directory", () => {
-        const r = parseArgs(["--organize-imports", "-p", SAMPLE_TSCONFIG, "--include", "src/**", "--exclude", "**/*.cli.ts"])
+        const r = parseArgs(["--apply", "-p", SAMPLE_TSCONFIG, "--include", "src/**", "--exclude", "**/*.cli.ts"])
         assert.ok(r && !("help" in r))
         const dir = path.dirname(SAMPLE_TSCONFIG)
         assert.equal(r.absIncludes[0], path.join(dir, "src/**"))
@@ -58,7 +60,7 @@ describe("parseArgs", () => {
     })
 
     it("defaults tsconfigPath to ./tsconfig.json when none is given", () => {
-        const r = parseArgs(["--organize-imports"])
+        const r = parseArgs(["--apply"])
         assert.ok(r && !("help" in r))
         assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
     })
@@ -100,13 +102,15 @@ describe("parseArgs", () => {
         assert.ok(r.reportNames.includes("unused-exports"))
         assert.ok(r.reportNames.includes("semicolons"))
         assert.equal(r.surveyDefault, true)
+        assert.equal(r.apply, false)
     })
 
-    it("does not auto-populate reports when an action is specified", () => {
-        const r = parseArgs(["--organize-imports"])
+    it("clears surveyDefault under --apply but still runs every report", () => {
+        const r = parseArgs(["--apply"])
         assert.ok(r && !("help" in r))
-        assert.deepEqual(r.reportNames, [])
+        // surveyDefault gates the recommendation Markdown blocks only.
         assert.equal(r.surveyDefault, false)
+        assert.ok(r.reportNames.includes("unused-exports"))
     })
 
     it("treats explicit --report or --format as opting out of the survey-default flag", () => {
@@ -133,25 +137,76 @@ describe("parseArgs", () => {
         assert.equal(r, undefined)
     })
 
-    it("accepts --semicolons on", () => {
+    it("accepts --semicolons on (implies --apply)", () => {
         const r = parseArgs(["--semicolons", "on", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
-        assert.equal(r.semicolons, "on")
+        assert.equal(r.apply, true)
+        assert.equal(r.applyOverrides.semicolons, "on")
     })
 
-    it("accepts --semicolons off", () => {
+    it("accepts --semicolons off (implies --apply)", () => {
         const r = parseArgs(["--semicolons", "off", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
-        assert.equal(r.semicolons, "off")
+        assert.equal(r.apply, true)
+        assert.equal(r.applyOverrides.semicolons, "off")
     })
 
-    it("returns undefined when action and --report are mixed", () => {
-        const r = quiet(() => parseArgs(["--organize-imports", "--report", "unused-exports", "-p", SAMPLE_TSCONFIG]))
+    it("accepts --indent N as a apply-mode override (implies --apply)", () => {
+        const r = parseArgs(["--indent", "4", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.apply, true)
+        assert.equal(r.applyOverrides.indent, 4)
+    })
+
+    it("rejects --indent with a non-positive integer", () => {
+        const r = quiet(() => parseArgs(["--indent", "0", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
 
-    it("returns undefined when action and --format are mixed", () => {
-        const r = quiet(() => parseArgs(["--organize-imports", "--format", "prettier", "-p", SAMPLE_TSCONFIG]))
+    it("accepts --new-line lf and --new-line crlf", () => {
+        const r1 = parseArgs(["--new-line", "lf", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r1 && !("help" in r1))
+        assert.equal(r1.applyOverrides.newLine, "lf")
+        const r2 = parseArgs(["--new-line", "crlf", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r2 && !("help" in r2))
+        assert.equal(r2.applyOverrides.newLine, "crlf")
+    })
+
+    it("rejects --new-line cr (LS formatter cannot emit CR-only)", () => {
+        const r = quiet(() => parseArgs(["--new-line", "cr", "-p", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
+
+    it("accepts --bracket-spacing on|off", () => {
+        const r = parseArgs(["--bracket-spacing", "off", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.applyOverrides.bracketSpacing, "off")
+    })
+
+    it("accepts --organize-imports on|off as a apply-mode override (implies --apply)", () => {
+        const r = parseArgs(["--organize-imports", "off", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.apply, true)
+        assert.equal(r.applyOverrides.organizeImports, "off")
+    })
+
+    it("rejects bare --organize-imports without an on|off argument", () => {
+        const r = quiet(() => parseArgs(["--organize-imports", "-p", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
+
+    it("returns undefined when apply overrides and --report are mixed", () => {
+        const r = quiet(() => parseArgs(["--indent", "4", "--report", "unused-exports", "-p", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
+
+    it("returns undefined when --apply and --format are mixed", () => {
+        const r = quiet(() => parseArgs(["--apply", "--format", "prettier", "-p", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
+
+    it("returns undefined when --semicolons (implicit apply) and --format are mixed", () => {
+        const r = quiet(() => parseArgs(["--semicolons", "on", "--format", "prettier", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
 })

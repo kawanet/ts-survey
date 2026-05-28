@@ -1,7 +1,9 @@
 import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
-import type {Writer} from "../lib/writable.ts"
+import type {RunReportsOpts} from "@kawanet/ts-survey"
 import {selectFormat} from "./run-format.ts"
+
+type Writer = RunReportsOpts["stream"]
 
 function makeStdout(): {writer: Writer; out: () => string} {
     let out = ""
@@ -38,7 +40,7 @@ describe("selectFormat", () => {
         f.finalize({semicolons: {semicolons: "off"}, indent: {width: 4}, memberSeparators: {separator: "none"}})
         // Two-line form: `ts-survey \` continuation, then the flags
         // indented by two spaces so `grep '^ +--'` picks them up.
-        assert.equal(out(), "ts-survey \\\n  --semicolons off --indent 4 --member-separator none\n")
+        assert.equal(out(), "ts-survey --apply \\\n  --semicolons off --indent 4 --member-separator none\n")
     })
 
     it("throws on an unknown format name", () => {

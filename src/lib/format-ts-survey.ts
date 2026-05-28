@@ -1,23 +1,15 @@
-// Heart of `--format ts-survey`. Builds the `ts-survey` invocation that
-// reproduces the report's recommendations, deriving the flags from each
-// report's Partial<RunXxxOpts> return value. This is the same idea as
-// `writePrettierConfig` (which builds a `.prettierrc` JSON from the
-// same shape) — just emitting CLI flags instead of JSON.
-//
-// The two-line layout (`ts-survey \` continuation, flags on the next
-// line) is intentional. Shell quoting isn't the reason — the indented
-// second line lets `grep -E '^ +--'` extract just the flags so the
-// recommendation can be piped back into another ts-survey invocation.
+// `--format ts-survey`: re-emit the recommendation as a runnable CLI.
+// Two-line layout (`\` continuation + 2-space indent) lets
+// `grep -E '^ +--'` extract just the flags.
 
-import type {TsSurveyReport} from "@kawanet/ts-survey"
+import type {RunReportsOpts, TsSurveyReport} from "@kawanet/ts-survey"
 
-import type {Writer} from "./writable.ts"
+// Local alias for readability — not exported.
+type Writer = RunReportsOpts["stream"]
 
-// Translates each fired recommendation into a CLI flag string. The
-// emission order is fixed (action-style flags → numeric → keyword) so
-// the same TsSurveyReport always produces byte-identical output, even
-// if upstream chose to fill the object's properties in a different
-// order.
+// Fixed emission order so the output is byte-identical regardless of
+// upstream property order. member-separators is printed for the human
+// record even though `--apply` does not consume it.
 function buildTsSurveyFlags(report: TsSurveyReport): string[] {
     const flags: string[] = []
     if (report.semicolons?.semicolons) flags.push(`--semicolons ${report.semicolons.semicolons}`)
@@ -28,30 +20,28 @@ function buildTsSurveyFlags(report: TsSurveyReport): string[] {
     return flags
 }
 
-// Raw output of `--format ts-survey`. When no recommendations fired we
-// still emit a bare `ts-survey` line, mirroring how `--format prettier`
-// emits an empty `{}` rather than nothing.
+// Always starts with `--apply` (the verb the recommendation translates to).
+// Empty recommendations still emit `ts-survey --apply`, paralleling
+// `--format prettier`'s empty `{}`.
 export function writeTsSurveyCommand(report: TsSurveyReport, stream: Writer): void {
     const flags = buildTsSurveyFlags(report)
     if (flags.length === 0) {
-        stream.write("ts-survey\n")
+        stream.write("ts-survey --apply\n")
         return
     }
-    stream.write("ts-survey \\\n")
+    stream.write("ts-survey --apply \\\n")
     stream.write(`  ${flags.join(" ")}\n`)
 }
 
-// The `## recommendation` block embedded in the default-survey Markdown
-// output. The whole block is skipped when no recommendations fired —
-// an empty sh fence carries no information. The trailing blank line
-// matches the convention every other report block follows.
+// `## recommendation` block in the default-survey Markdown. Skipped
+// when no recommendations fired (the empty form carries no information).
 export function writeTsSurveyMarkdown(report: TsSurveyReport, stream: Writer): void {
     const flags = buildTsSurveyFlags(report)
     if (flags.length === 0) return
     stream.write("## recommendation\n")
     stream.write("\n")
     stream.write("```sh\n")
-    stream.write("ts-survey \\\n")
+    stream.write("ts-survey --apply \\\n")
     stream.write(`  ${flags.join(" ")}\n`)
     stream.write("```\n")
     stream.write("\n")
