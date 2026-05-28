@@ -1,10 +1,10 @@
 // CLI help text. Returned as a string so the caller (cli.ts) can decide
 // whether to write it to stdout (--help) or stderr (after an argv error).
-// `reportNames` / `formatNames` are pulled from their respective routers
-// so help stays in sync with whatever names are wired up.
+// `reportNames` / `formatNames` are pulled from their respective registry
+// files so help stays in sync with whatever names are wired up.
 
 import {formatNames} from "../format/run-format.ts"
-import {reportNames} from "../report/run-reports.ts"
+import {reportNames} from "../report/report-names.ts"
 
 export function usage(): string {
     return [

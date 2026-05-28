@@ -53,9 +53,20 @@ export interface RunBracketSpacingOpts extends RunOrganizeImportsOpts {
     bracketSpacing: "on" | "off"
 }
 
+// Every report module that runReports knows about. Adding a report
+// means extending this union, the runtime list in
+// src/report/report-names.ts, and the dispatch in src/report/run-reports.ts.
+export type TsSurveyReportName =
+    | "unused-exports"
+    | "semicolons"
+    | "indent"
+    | "member-separators"
+    | "new-line"
+    | "bracket-spacing"
+
 export interface RunReportsOpts extends TsSurveyOpts {
     stream: Writer
-    reportNames: string[]
+    reportNames: TsSurveyReportName[]
 }
 
 // Recommendations collected by runReports, keyed by the report that

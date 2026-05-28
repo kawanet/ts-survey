@@ -26,7 +26,7 @@
 
 import path from "node:path"
 
-import {reportNames as knownReportNames} from "../report/run-reports.ts"
+import {reportNames as knownReportNames} from "../report/report-names.ts"
 
 export interface ParsedArgs {
     organizeImports: boolean

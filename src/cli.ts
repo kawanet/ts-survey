@@ -10,6 +10,8 @@
 // leading whitespace once that structure is final; the semicolons pass
 // only touches trailing characters and stays last.
 
+import type {TsSurveyReportName} from "@kawanet/ts-survey"
+
 import {selectFormat} from "./format/run-format.ts"
 import {initProject, runIndent, runOrganizeImports, runReports, runSemicolons} from "./index.ts"
 import {writePrettierMarkdown} from "./lib/format-prettier.ts"
@@ -56,7 +58,11 @@ try {
     // per-format stream swap and post-processing, so cli.ts no longer
     // hard-codes any specific format name.
     const format = selectFormat(opts.format, process.stdout)
-    const report = await runReports(project, {...fileOpts, reportNames: opts.reportNames, stream: format.reportStream})
+    // parseArgs intentionally keeps reportNames as a `string[]` so a typo
+    // reaches runReports and surfaces the actionable "unknown report name"
+    // error there rather than at the parse boundary. Cast at the call site.
+    const reportNames = opts.reportNames as TsSurveyReportName[]
+    const report = await runReports(project, {...fileOpts, reportNames, stream: format.reportStream})
     // Survey-default mode appends two recommendation blocks under the
     // per-report tables: `## recommendation` (the runnable ts-survey
     // command) followed by `### .prettierrc` (the JSON form). Skipping
