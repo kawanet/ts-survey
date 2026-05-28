@@ -63,6 +63,31 @@ describe("parseArgs", () => {
         assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
     })
 
+    it("accepts -p with a tsconfig.json path", () => {
+        const r = parseArgs(["-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
+    })
+
+    it("accepts --project as the long form of -p", () => {
+        const r = parseArgs(["--project", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
+    })
+
+    it("treats a non-.json -p value as a directory and appends tsconfig.json", () => {
+        const dir = path.dirname(SAMPLE_TSCONFIG)
+        const r = parseArgs(["-p", dir])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, path.join(dir, "tsconfig.json"))
+    })
+
+    it("treats `-p .` the same as omitting the path", () => {
+        const r = parseArgs(["-p", "."])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
+    })
+
     it("returns {help: true} on --help", () => {
         assert.deepEqual(parseArgs(["--help"]), {help: true})
         assert.deepEqual(parseArgs(["-h"]), {help: true})

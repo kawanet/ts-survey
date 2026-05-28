@@ -10,7 +10,13 @@
 //
 // Defaults reflect the "survey" in the package name: when the user
 // supplies neither an action nor an explicit --report, every known
-// report runs. The tsconfig path defaults to ./tsconfig.json.
+// report runs. The tsconfig path defaults to ./tsconfig.json (i.e.
+// equivalent to `-p .`).
+//
+// Project path resolution mirrors `tsc`: `-p` / `--project` takes
+// either a `.json` file or a directory. A non-`.json` value is treated
+// as a directory and `/tsconfig.json` is appended. A bare positional
+// path is still accepted as a legacy shortcut.
 //
 // Return value semantics (parseArgs never calls process.exit):
 //   - ParsedArgs       — normal parse, ready to dispatch
@@ -113,6 +119,17 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
             const v = takeGlobValue(argv, ++i, "--exclude")
             if (v === undefined) return undefined
             excludeGlobs.push(v)
+        } else if (a === "-p" || a === "--project") {
+            const v = argv[++i]
+            if (!v || v.startsWith("-")) {
+                console.error(`${a} requires a path (e.g. ${a} tsconfig.json)`)
+                return undefined
+            }
+            if (tsconfigPath) {
+                console.error(`${a} cannot be combined with another tsconfig path`)
+                return undefined
+            }
+            tsconfigPath = v
         } else if (a.startsWith("--")) {
             console.error(`unknown option: ${a}`)
             return undefined
@@ -147,10 +164,11 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     const surveyDefault = !hasAction && !hasReport && format === null
     const effectiveReports = !hasAction && !hasReport ? [...knownReportNames] : requestedReports
 
-    // Default to ./tsconfig.json in the current working directory when the
-    // path is omitted. Existence is not checked here; initProject() surfaces
-    // a missing file as a normal throw caught by the CLI.
-    const absTsconfig = path.resolve(tsconfigPath ?? "tsconfig.json")
+    // Path resolution mirrors `tsc -p`: a non-`.json` value is read as a
+    // directory and `tsconfig.json` is appended. The omitted-path default
+    // is equivalent to `-p .`. Existence isn't checked here; initProject()
+    // surfaces a missing file as a normal throw caught by the CLI.
+    const absTsconfig = resolveTsconfigPath(tsconfigPath ?? ".")
 
     // Resolve include/exclude globs against the tsconfig directory so the same
     // command yields the same target set regardless of cwd.
@@ -185,4 +203,12 @@ function takeGlobValue(args: string[], idx: number, optName: string): string | u
 function resolveGlob(pattern: string, baseDir: string): string {
     if (path.isAbsolute(pattern)) return pattern
     return path.resolve(baseDir, pattern)
+}
+
+// `tsc -p` 互換: 拡張子 `.json` ならファイル指定、それ以外はディレクトリと
+// みなして `tsconfig.json` を補う。`-p .` がデフォルトと等価になる。
+function resolveTsconfigPath(input: string): string {
+    const absolute = path.resolve(input)
+    if (input.endsWith(".json")) return absolute
+    return path.join(absolute, "tsconfig.json")
 }
