@@ -16,7 +16,7 @@ import type {ClassMemberTypes, Project, TypeElementTypes} from "ts-morph"
 import {Node} from "ts-morph"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
-import type {ReportOpts} from "../lib/types.ts"
+import type {ReportOpts} from "./types.ts"
 
 type Separator = "none" | "," | ";"
 

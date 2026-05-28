@@ -1,6 +1,6 @@
 import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
-import type {Writer} from "../lib/writable.ts"
+import type {Writer} from "@kawanet/ts-survey"
 import {selectFormat} from "./run-format.ts"
 
 function makeStdout(): {writer: Writer; out: () => string} {

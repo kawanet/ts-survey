@@ -7,7 +7,7 @@ import type {Project} from "ts-morph"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import {isSemiEligibleStatement} from "../lib/statement-kinds.ts"
-import type {ReportOpts} from "../lib/types.ts"
+import type {ReportOpts} from "./types.ts"
 
 // Fixed 7-row layout: 0% / 100% / exact-50% match by equality, "1-10%" and
 // "90-99%" are the near-boundary tails, and the two middle buckets fill the

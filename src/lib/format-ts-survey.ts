@@ -2,9 +2,7 @@
 // Two-line layout (`\` continuation + 2-space indent) lets
 // `grep -E '^ +--'` extract just the flags.
 
-import type {TsSurveyReport} from "@kawanet/ts-survey"
-
-import type {Writer} from "./writable.ts"
+import type {TsSurveyReport, Writer} from "@kawanet/ts-survey"
 
 // Fixed emission order so the output is byte-identical regardless of
 // upstream property order. member-separators is printed for the human

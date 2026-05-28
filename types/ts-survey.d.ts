@@ -8,10 +8,10 @@ export {}; // external module indicator
 
 // Sink contract for report writers. Callers pass `process.stdout` or
 // any object with `write(line)`.
-type Writer = {write: (line: string) => void}
+export type Writer = {write: (line: string) => void}
 
 // Common base for every entry. Leaf Opts interfaces inherit it.
-interface TsSurveyOpts {
+export interface TsSurveyOpts {
     absIncludes: string[]
     absExcludes: string[]
 }

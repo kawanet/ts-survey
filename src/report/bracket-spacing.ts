@@ -10,7 +10,7 @@ import type {Project} from "ts-morph"
 import {Node} from "ts-morph"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
-import type {ReportOpts} from "../lib/types.ts"
+import type {ReportOpts} from "./types.ts"
 
 type Style = "on" | "off"
 

@@ -1,15 +1,25 @@
 // Pure helper: report + overrides → settings runApply consumes.
 // Per-field precedence is override > recommendation > undefined.
 
+import type {TsSurveyReport} from "@kawanet/ts-survey"
+import type {FormatCodeSettings} from "ts-morph"
 import {ts} from "ts-morph"
 
 import type {ApplyOverrides} from "./parse-args.ts"
-import type {ResolvedSettings, TsSurveyReportForMerge} from "./types.ts"
+
+// LS settings + runApply-only concerns (organize gate, newline post-pass,
+// CR diagnostic). Local to this module — runApply reads the shape only.
+export interface ResolvedSettings {
+    formatSettings: FormatCodeSettings
+    organizeImports: boolean
+    newLineNormalize: "\n" | "\r\n" | undefined
+    crRecommended: boolean
+}
 
 // FormatCodeSettings is readonly; build mutably and cast at the return.
-type MutableFormatSettings = {-readonly [K in keyof ResolvedSettings["formatSettings"]]: ResolvedSettings["formatSettings"][K]}
+type MutableFormatSettings = {-readonly [K in keyof FormatCodeSettings]: FormatCodeSettings[K]}
 
-export function mergeRecommendations(report: TsSurveyReportForMerge, overrides: ApplyOverrides): ResolvedSettings {
+export function mergeRecommendations(report: TsSurveyReport, overrides: ApplyOverrides): ResolvedSettings {
     const formatSettings: MutableFormatSettings = {}
 
     // convertTabsToSpaces is pinned: the recommender speaks spaces only.
