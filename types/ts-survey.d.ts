@@ -2,7 +2,7 @@
  * https://github.com/kawanet/ts-survey
  */
 
-import type {Project} from "ts-morph"
+import type {Project} from "ts-morph";
 
 export {}; // external module indicator
 

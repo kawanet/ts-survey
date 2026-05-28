@@ -10,10 +10,10 @@
 // continuation lines (first non-space `*`) are likewise skipped so their
 // 1-space convention is not rescaled.
 
-import fs from "node:fs/promises"
 import type {RunIndentOpts} from "@kawanet/ts-survey"
-import {Node} from "ts-morph"
+import fs from "node:fs/promises"
 import type {Project, SourceFile} from "ts-morph"
+import {Node} from "ts-morph"
 
 import {detectIndent, type IndentWidth, primaryIndentWidth} from "../lib/detect-indent.ts"
 import {selectSourceFiles} from "../lib/source-files.ts"

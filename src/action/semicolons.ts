@@ -4,8 +4,8 @@
 // `isSemicolonDeletionContext` (formatting/rules.ts) closely enough to avoid
 // the common pitfalls.
 
-import fs from "node:fs/promises"
 import type {RunSemicolonsOpts} from "@kawanet/ts-survey"
+import fs from "node:fs/promises"
 import type {Project} from "ts-morph"
 
 import {selectSourceFiles} from "../lib/source-files.ts"

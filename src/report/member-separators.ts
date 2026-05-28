@@ -12,8 +12,8 @@
 // `semi: false`.
 
 import type {RunMemberSeparatorsOpts} from "@kawanet/ts-survey"
-import {Node} from "ts-morph"
 import type {ClassMemberTypes, Project, TypeElementTypes} from "ts-morph"
+import {Node} from "ts-morph"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import type {ReportOpts} from "../lib/types.ts"
