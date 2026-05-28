@@ -4,6 +4,7 @@
 
 import type {Project} from "ts-morph"
 
+import type {RunSemicolonsOpts} from "../action/semicolons.ts"
 import {writeRecommendation} from "../lib/recommendation.ts"
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import {isSemiEligibleStatement} from "../lib/statement-kinds.ts"
@@ -26,7 +27,7 @@ const BUCKETS: {label: string; test: (p: number) => boolean}[] = [
     {label: "100%", test: (p) => p === 100},
 ]
 
-export async function runReportSemicolons(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<void> {
+export async function runReportSemicolons(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<Partial<RunSemicolonsOpts>> {
     const sourceFiles = selectSourceFiles(project, {absIncludes, absExcludes}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     type PerFile = {path: string; total: number; withSemi: number; percent: number}
@@ -60,9 +61,8 @@ export async function runReportSemicolons(project: Project, {stream, absIncludes
     // exactly 50% are ambiguous and excluded from the comparison.
     const below = perFile.filter((f) => f.percent < 50).length
     const above = perFile.filter((f) => f.percent > 50).length
-    let recommendFlag: string | undefined
-    if (below > above) recommendFlag = "--remove-semicolons"
-    else if (above > below) recommendFlag = "--insert-semicolons"
+    const recommendMode: "remove" | "insert" | undefined = below > above ? "remove" : above > below ? "insert" : undefined
+    const recommendFlag = recommendMode === "remove" ? "--remove-semicolons" : recommendMode === "insert" ? "--insert-semicolons" : undefined
 
     stream.write("### semicolons\n")
     stream.write("\n")
@@ -86,4 +86,5 @@ export async function runReportSemicolons(project: Project, {stream, absIncludes
         stream.write("\n")
     }
     console.error(`report semicolons: ${perFile.length} files counted / ${sourceFiles.length} files total`)
+    return recommendMode ? {mode: recommendMode} : {}
 }

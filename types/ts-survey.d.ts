@@ -35,6 +35,15 @@ export interface RunReportsOpts extends TsSurveyOpts {
     reportNames: string[]
 }
 
+// Recommendations collected by runReports, keyed by the report that
+// produced them. Each value is the partial of the matching action's
+// Opts that the report would suggest applying; missing keys mean the
+// report didn't run or had nothing to recommend.
+export interface TsSurveyReport {
+    semicolons?: Partial<RunSemicolonsOpts>
+    indent?: Partial<RunIndentOpts>
+}
+
 export declare function initProject(tsconfigPath: string): Project
 
 export declare function runOrganizeImports(project: Project, opts: RunOrganizeImportsOpts): Promise<void>
@@ -43,4 +52,4 @@ export declare function runSemicolons(project: Project, opts: RunSemicolonsOpts)
 
 export declare function runIndent(project: Project, opts: RunIndentOpts): Promise<void>
 
-export declare function runReports(project: Project, opts: RunReportsOpts): Promise<void>
+export declare function runReports(project: Project, opts: RunReportsOpts): Promise<TsSurveyReport>

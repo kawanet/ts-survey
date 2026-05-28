@@ -9,6 +9,7 @@
 
 import type {Project} from "ts-morph"
 
+import type {RunIndentOpts} from "../action/indent.ts"
 import {detectIndent, type IndentCounts, type IndentWidth} from "../lib/detect-indent.ts"
 import {writeRecommendation} from "../lib/recommendation.ts"
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
@@ -16,7 +17,7 @@ import type {ReportOpts} from "../lib/types.ts"
 
 type Bucket = {lines: number; files: number; topPath: string; topLines: number}
 
-export async function runReportIndent(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<void> {
+export async function runReportIndent(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<Partial<RunIndentOpts>> {
     const sourceFiles = selectSourceFiles(project, {absIncludes, absExcludes}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     // Per-file: detect leading-width distribution, then collapse to one
@@ -88,6 +89,11 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
         stream.write("\n")
     }
     console.error(`report indent: ${perFile.length} files counted / ${sourceFiles.length} files total`)
+    // Only numeric widths translate to a RunIndentOpts.width. A "tab"
+    // recommendation is meaningful in the table but has no action mapping
+    // today (the --indent action takes a positive integer), so we leave
+    // the return slot empty in that case.
+    return typeof recommendWidth === "number" ? {width: recommendWidth} : {}
 }
 
 // Picks the width with the most lines in this file. Ties break toward the
