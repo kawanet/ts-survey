@@ -20,7 +20,7 @@ describe("displayPath", () => {
         }
     })
 
-    it("strips multi-level parent chains from long batch-report paths", () => {
+    it("strips everything through the last parent segment in long relative paths", () => {
         const root = fs.mkdtempSync(path.join(os.tmpdir(), "ts-survey-display-"))
         const prev = process.cwd()
         try {

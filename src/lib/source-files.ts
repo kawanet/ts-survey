@@ -20,9 +20,9 @@ export function selectSourceFiles(project: Project, {absIncludes, absExcludes}: 
     return files
 }
 
-// Shortens only long multi-level escapes from path.relative(). A single `../`
-// can still be useful context, but repeated escapes are usually just noise in
-// batch reports that run from a distant cwd.
+// Shortens long paths by dropping everything through the last interior
+// `/../`. A leading `../` chain is left alone because it can still be useful
+// context when the command itself was run from a nearby relative tsconfig.
 export function displayPath(absPath: string): string {
-    return path.relative(process.cwd(), absPath).replace(/^(\.\.[/\\]){2,}/, "")
+    return path.relative(process.cwd(), absPath).replace(/^.*[/\\]\.\.[/\\]/, "")
 }
