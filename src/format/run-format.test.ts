@@ -36,7 +36,8 @@ describe("selectFormat", () => {
         f.reportStream.write("### dropped\n")
         assert.equal(out(), "")
         f.finalize({semicolons: {mode: "remove"}, indent: {width: 4}, memberSeparators: {separator: "none"}})
-        // 2 行形式: `ts-survey \` + 2 スペースインデント + フラグ列。
+        // Two-line form: `ts-survey \` continuation, then the flags
+        // indented by two spaces so `grep '^ +--'` picks them up.
         assert.equal(out(), "ts-survey \\\n  --remove-semicolons --indent 4 --member-separator none\n")
     })
 

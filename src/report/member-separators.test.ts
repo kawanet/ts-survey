@@ -41,7 +41,8 @@ describe("runReportMemberSeparators (sample/members-mixed)", () => {
         const lines: string[] = []
         const ret = await runReportMemberSeparators(project, {stream: {write: (l) => lines.push(l)}, absIncludes: [], absExcludes: []})
         const out = lines.join("")
-        // 推奨は Markdown には出さず、戻り値 (アクション引数 RunMemberSeparatorsOpts.separator) で返す。
+        // Recommendation is no longer inlined in the Markdown; it comes back
+        // as the return value (RunMemberSeparatorsOpts.separator).
         assert.equal(/^recommendation:/m.test(out), false)
         assert.deepEqual(ret, {separator: "semi"})
     })

@@ -68,8 +68,8 @@ export async function runReportSemicolons(project: Project, {stream, absIncludes
     stream.write(`| total | ${perFile.length} | |\n`)
     stream.write("\n")
     console.error(`report semicolons: ${perFile.length} files counted / ${sourceFiles.length} files total`)
-    // 推奨は Markdown 末尾の `## recommendation` 節でまとめて出すので、
-    // ここではアクション引数 (RunSemicolonsOpts) の形で返すだけ。
+    // The recommendation is rendered in the trailing `## recommendation`
+    // section, so all we return here is the action params shape.
     return recommendMode ? {mode: recommendMode} : {}
 }
 

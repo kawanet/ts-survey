@@ -28,10 +28,13 @@ export interface RunReportsOpts {
     absExcludes: string[]
 }
 
-// 各キーは「該当アクションを呼び出すための引数 (の Partial)」。formatter
-// 群はこれを起点に `--format prettier` / `--format ts-survey` などへ
-// 再構築する。`member-separators` はアクション未実装だが、戻り値の枠だけ
-// 先に揃えておく。
+// Each key is a Partial of the options the matching action would accept.
+// The formatter family (`--format prettier`, `--format ts-survey`)
+// rebuilds its output from this shape, so reports stay decoupled from
+// any specific output format. `memberSeparators` carries the shape even
+// though the action isn't implemented yet — that lets the formatters
+// emit the recommendation today, and the action drops in later without
+// touching either side.
 export interface TsSurveyReport {
     semicolons?: Partial<RunSemicolonsOpts>
     indent?: Partial<RunIndentOpts>

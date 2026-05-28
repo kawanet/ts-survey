@@ -7,7 +7,7 @@
 //   semicolons.mode === "insert"            → semi: true
 //   semicolons.mode === "remove"            → semi: false
 //   indent.width === <number>               → tabWidth: <number>, useTabs: false
-//   memberSeparators.separator === "semi"   → semi: true   (semicolons 未指定時)
+//   memberSeparators.separator === "semi"   → semi: true   (only when semicolons is silent)
 //   memberSeparators.separator === "comma"  → semi: false, trailingComma: "all"
 //   memberSeparators.separator === "none"   → semi: false, trailingComma: "none"
 // Reports that didn't recommend anything contribute no fields, so an
@@ -18,8 +18,9 @@ import type {Options as PrettierOptions} from "prettier"
 import type {TsSurveyReport} from "../report/run-reports.ts"
 import type {Writer} from "./writable.ts"
 
-// 推奨が出た項目だけを PrettierOptions に詰め直す。--format prettier の
-// 直接出力と、デフォルト Markdown 末尾のフェンス埋め込み、両方の入力源。
+// Collects the recommendations that fired into a PrettierOptions object.
+// Shared by the raw --format prettier output and the .prettierrc fence
+// embedded in the default Markdown survey.
 function buildPrettierOptions(report: TsSurveyReport): PrettierOptions {
     const opts: PrettierOptions = {}
     if (report.semicolons?.mode === "insert") opts.semi = true
@@ -28,14 +29,17 @@ function buildPrettierOptions(report: TsSurveyReport): PrettierOptions {
         opts.tabWidth = report.indent.width
         opts.useTabs = false
     }
-    // member-separators マッピング:
-    // - semi は statement と member の両方を支配するので、まず semicolons
-    //   レポート (= 統計母数が大きい側) の値を優先採用。それが未確定のときだけ
-    //   member-separators から導出する。
-    // - trailingComma は semi が false 確定のときだけ意味を持つ
-    //   (Prettier は semi:true で member を `;` で区切るため)。
-    // - semi:true × member=none/comma のような矛盾配置では trailingComma を
-    //   出さない: semi 側を真実とみなし、矛盾するシグナルは黙って捨てる。
+    // member-separators mapping:
+    // - `semi` governs both statements and members in Prettier, so when
+    //   the two reports both speak it goes to the one with the larger
+    //   statement population (semicolons). The member-separator
+    //   recommendation only contributes `semi` when semicolons is silent.
+    // - `trailingComma` is only meaningful once `semi: false` is committed
+    //   (Prettier separates members with `;` when `semi: true`), so it's
+    //   gated on that flag.
+    // - For the inherently contradictory `semi:true × member=none/comma`
+    //   shape we leave `trailingComma` off rather than emit a config
+    //   Prettier would interpret as `;` everywhere regardless.
     const ms = report.memberSeparators?.separator
     if (opts.semi === undefined) {
         if (ms === "semi") opts.semi = true
@@ -52,9 +56,10 @@ export function writePrettierConfig(report: TsSurveyReport, stream: Writer): voi
     stream.write(JSON.stringify(buildPrettierOptions(report), null, 4) + "\n")
 }
 
-// デフォルトの全レポート Markdown 出力末尾に差し込む `.prettierrc` ブロック。
-// 推奨が一切出ていないときは丸ごとスキップ (`{}` だけ載せても意味がない)。
-// 末尾に空行 1 行を付けるのは他のレポートブロックと同じスタイルに合わせるため。
+// The `.prettierrc` fence appended at the end of the default-survey
+// Markdown output. The whole block is skipped when no recommendations
+// fired — an empty `{}` block would be pure noise. The trailing blank
+// line matches the convention every other report block follows.
 export function writePrettierMarkdown(report: TsSurveyReport, stream: Writer): void {
     const opts = buildPrettierOptions(report)
     if (Object.keys(opts).length === 0) return

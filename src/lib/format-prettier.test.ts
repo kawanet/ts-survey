@@ -47,7 +47,7 @@ describe("writePrettierConfig", () => {
     it("maps memberSeparators.separator=semi → semi: true (when semicolons is silent)", () => {
         const json = JSON.parse(capture({memberSeparators: {separator: "semi"}}))
         assert.equal(json.semi, true)
-        // semi:true なら member は `;` で区切られるので trailingComma は不要。
+        // Members are separated by `;` under semi:true, so trailingComma adds nothing.
         assert.equal(json.trailingComma, undefined)
     })
 
@@ -70,7 +70,8 @@ describe("writePrettierConfig", () => {
     })
 
     it("lets semicolons win the semi flag when the two reports disagree", () => {
-        // semicolons:insert + member=none は矛盾。semi:true を尊重し、trailingComma は出さない。
+        // semicolons:insert × member=none is contradictory. Keep semi:true (the
+        // stronger signal) and drop trailingComma rather than emit a self-conflict.
         const json = JSON.parse(capture({semicolons: {mode: "insert"}, memberSeparators: {separator: "none"}}))
         assert.equal(json.semi, true)
         assert.equal(json.trailingComma, undefined)

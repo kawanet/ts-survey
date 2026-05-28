@@ -32,7 +32,7 @@ describe("writeTsSurveyCommand", () => {
     it("combines all three recommendations in a fixed order", () => {
         const out = capture((s) =>
             writeTsSurveyCommand(
-                // 入力キー順を逆さまにしても出力順は固定。
+                // Input keys are intentionally reversed; the output order is fixed.
                 {memberSeparators: {separator: "none"}, indent: {width: 4}, semicolons: {mode: "remove"}},
                 s,
             ),
@@ -41,7 +41,7 @@ describe("writeTsSurveyCommand", () => {
     })
 
     it("emits a bare `ts-survey` when nothing was recommended", () => {
-        // `--format prettier` が空オブジェクト `{}` を出すのと対称。
+        // Symmetric with `--format prettier` emitting an empty `{}` for the same case.
         const out = capture((s) => writeTsSurveyCommand({}, s))
         assert.equal(out, "ts-survey\n")
     })

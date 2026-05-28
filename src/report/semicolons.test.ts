@@ -21,9 +21,10 @@ describe("runReportSemicolons (sample/semicolons-mixed)", () => {
         assert.match(out, /\| total \| 3 \| \|/)
         // Empty file should not appear anywhere.
         assert.equal(/empty\.ts/.test(out), false)
-        // 推奨は Markdown には出さず、戻り値として返す (アクション引数の形)。
+        // Recommendation is no longer inlined in the Markdown; it comes back
+        // as the return value (Partial<RunSemicolonsOpts>). A tied fixture
+        // returns an empty partial.
         assert.equal(/^recommendation:/m.test(out), false)
-        // 戻り値は RunSemicolonsOpts の Partial。タイ判定なら空。
         if (Object.keys(ret).length > 0) assert.ok(ret.mode === "remove" || ret.mode === "insert")
     })
 

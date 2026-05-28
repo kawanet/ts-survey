@@ -161,8 +161,9 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
 
     // Default: when neither an action nor an explicit --report was given,
     // run every registered report. This is the "survey" baseline behavior.
-    // surveyDefault は --format も未指定であることまで含めた「全部おまかせ」
-    // 状態だけ true にする — cli.ts はこれを見て .prettierrc 要約ブロックを差し込む。
+    // surveyDefault is true only in the full hands-off state (no action,
+    // no --report, no --format); cli.ts reads it to decide whether to
+    // append the recommendation / .prettierrc summary blocks.
     const surveyDefault = !hasAction && !hasReport && format === null
     const effectiveReports = !hasAction && !hasReport ? [...knownReportNames] : requestedReports
 
@@ -207,8 +208,9 @@ function resolveGlob(pattern: string, baseDir: string): string {
     return path.resolve(baseDir, pattern)
 }
 
-// `tsc -p` 互換: 拡張子 `.json` ならファイル指定、それ以外はディレクトリと
-// みなして `tsconfig.json` を補う。`-p .` がデフォルトと等価になる。
+// Mirrors `tsc -p`: a `.json` value is read as a file path, anything
+// else is read as a directory and `tsconfig.json` is appended. This
+// makes `-p .` equivalent to the omitted-path default.
 function resolveTsconfigPath(input: string): string {
     const absolute = path.resolve(input)
     if (input.endsWith(".json")) return absolute

@@ -58,10 +58,12 @@ try {
     // hard-codes any specific format name.
     const format = selectFormat(opts.format, process.stdout)
     const report = await runReports(project, {...fileOpts, reportNames: opts.reportNames, stream: format.reportStream})
-    // 全部おまかせ実行のときだけ、Markdown テーブル群の末尾に推奨をまとめる:
-    // `## recommendation` (ts-survey コマンド形) → `### .prettierrc` (JSON 形)
-    // の順。--report 明示時は読者が必要な節だけ要求しているし、--format 指定
-    // 時はそもそも Markdown を出していないので、どちらの追加もしない。
+    // Survey-default mode appends two recommendation blocks under the
+    // per-report tables: `## recommendation` (the runnable ts-survey
+    // command) followed by `### .prettierrc` (the JSON form). Skipping
+    // these for the other paths is intentional — `--report` callers
+    // asked for specific sections, and `--format` already suppresses
+    // the Markdown body entirely.
     if (opts.surveyDefault) {
         writeTsSurveyMarkdown(report, process.stdout)
         writePrettierMarkdown(report, process.stdout)

@@ -30,8 +30,9 @@ const SEP_LABEL: Record<Separator, string> = {
     ";": "`;`",
 }
 
-// CLI 表記 (`--member-separator <value>`) と内部 Separator 記号の対応。
-// `RunMemberSeparatorsOpts.separator` の値もこの右辺と一致させる。
+// Maps internal Separator symbols to the CLI vocabulary used by
+// `--member-separator <value>`. RunMemberSeparatorsOpts.separator also
+// uses these strings as its value space.
 const SEP_FLAG_VALUE: Record<Separator, RunMemberSeparatorsOpts["separator"]> = {
     none: "none",
     ",": "comma",
@@ -103,8 +104,9 @@ export async function runReportMemberSeparators(project: Project, {stream, absIn
     stream.write(`| total | ${totalLines} | ${perFile.length} | |\n`)
     stream.write("\n")
     console.error(`report member-separators: ${perFile.length} files counted / ${sourceFiles.length} files total`)
-    // 推奨は Markdown 末尾の `## recommendation` 節でまとめて出すので、
-    // ここではアクション引数の形だけ返す。ファイル数最頻が決まらなければ空。
+    // The recommendation is rendered in the trailing `## recommendation`
+    // section, so all we return is the action params shape. An ambiguous
+    // file-count majority (no strict winner) returns an empty partial.
     return recommendSep !== undefined ? {separator: SEP_FLAG_VALUE[recommendSep]} : {}
 }
 

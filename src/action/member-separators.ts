@@ -1,13 +1,13 @@
-// 公開アクションは未実装。`RunMemberSeparatorsOpts` だけ先に切ってあるのは、
-// レポート戻り値の型を「アクション引数」の枠に揃える設計を維持するため
-// (`RunSemicolonsOpts` / `RunIndentOpts` と同じ流儀)。`--format ts-survey` と
-// `--format prettier` はこのインタフェースを介してレポート結果から CLI フラグ /
-// `.prettierrc` を再構築する。アクション本体が入ったらここに `runMemberSeparators`
-// を足す。
+// The action implementation isn't here yet. `RunMemberSeparatorsOpts`
+// exists on its own so the report can return its recommendation in the
+// same "action params" shape as `RunSemicolonsOpts` / `RunIndentOpts`,
+// which is what both `--format prettier` and `--format ts-survey` build
+// their output from. `runMemberSeparators` slots in here when the action
+// lands, with no change to the report or formatter wiring.
 
 import type {RunOrganizeImportsOpts} from "./organize-imports.ts"
 
 export interface RunMemberSeparatorsOpts extends RunOrganizeImportsOpts {
-    // CLI フラグと同じ語彙にしておく (`--member-separator semi|comma|none`)。
+    // Vocabulary matches the eventual CLI flag (`--member-separator semi|comma|none`).
     separator: "semi" | "comma" | "none"
 }

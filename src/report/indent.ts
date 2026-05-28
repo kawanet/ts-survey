@@ -83,8 +83,10 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
     stream.write(`| total | ${totalLines} | ${perFile.length} | |\n`)
     stream.write("\n")
     console.error(`report indent: ${perFile.length} files counted / ${sourceFiles.length} files total`)
-    // Markdown 末尾の `## recommendation` 節でまとめて出すため、ここでは
-    // アクション引数 (RunIndentOpts) の形だけ返す。"tab" は現アクション
-    // (`--indent N`) に対応しないので空で返し、`## recommendation` 側で省略。
+    // The recommendation is rendered in the `## recommendation` section
+    // at the end of the Markdown survey, so all we return is the action
+    // params (RunIndentOpts) shape. A "tab" majority has no numeric
+    // mapping under the current `--indent N` action, so it returns
+    // empty and the `## recommendation` block simply omits it.
     return typeof recommendWidth === "number" ? {width: recommendWidth} : {}
 }
