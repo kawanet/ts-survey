@@ -20,7 +20,6 @@ export function isSemiEligibleStatement(node: Node): boolean {
         Node.isThrowStatement(node) ||
         Node.isBreakStatement(node) ||
         Node.isContinueStatement(node) ||
-        Node.isDebuggerStatement(node) ||
-        Node.isDoStatement(node)
+        Node.isDebuggerStatement(node)
     )
 }

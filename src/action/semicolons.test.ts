@@ -140,3 +140,17 @@ describe("runSemicolons remove keeps `;` at ASI-hazard sites", () => {
         assert.match(text, /const z = 3$/)
     })
 })
+
+describe("runSemicolons remove preserves grammar-required semicolons", () => {
+    it("keeps the trailing `;` on do-while statements", async () => {
+        const project = new Project({useInMemoryFileSystem: true})
+        const sf = project.createSourceFile("do-while.ts", ["let x = 0;", "do {", "  x++", "} while (x < 2);", "const y = x;"].join("\n"))
+
+        await runSemicolons(project, {dryRun: true, absIncludes: [], absExcludes: [], mode: "remove"})
+
+        const text = sf.getFullText()
+        assert.match(text, /} while \(x < 2\);/)
+        assert.match(text, /let x = 0\n/)
+        assert.match(text, /const y = x$/)
+    })
+})

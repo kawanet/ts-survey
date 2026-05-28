@@ -47,6 +47,22 @@ describe("runReportSemicolons (sample/semicolons-mixed)", () => {
         assert.match(out, /\| 50% \| 1 \| /)
         assert.match(out, /\| 90-99% \| 1 \| /)
     })
+
+    it("does not count grammar-required do-while semicolons", async () => {
+        const project = new Project({useInMemoryFileSystem: true})
+        project.createSourceFile("/sample/do-while.ts", ["let x = 0", "do {", "  x++", "} while (x < 2);"].join("\n"))
+        const lines: string[] = []
+
+        await runReportSemicolons(project, {
+            stream: {write: (l) => lines.push(l)},
+            absIncludes: ["/sample/*.ts"],
+            absExcludes: [],
+        })
+
+        const out = lines.join("")
+        assert.match(out, /\| 0% \| 1 \| /)
+        assert.match(out, /\| total \| 1 \| \|/)
+    })
 })
 
 function statements(withSemi: number, total: number): string {
