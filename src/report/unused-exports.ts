@@ -9,7 +9,7 @@ import type {Project} from "ts-morph"
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import type {Writer} from "../lib/writable.ts"
 
-export type ReportOpts = {
+export interface ReportOpts {
     stream: Writer
     absIncludes: string[]
     absExcludes: string[]

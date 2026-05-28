@@ -7,13 +7,13 @@ import type {Project} from "ts-morph"
 
 import {selectSourceFiles} from "../lib/source-files.ts"
 
-export type OrganizeOpts = {
+export interface RunOrganizeImportsOpts {
     dryRun: boolean
     absIncludes: string[]
     absExcludes: string[]
 }
 
-export async function runOrganizeImports(project: Project, {dryRun, absIncludes, absExcludes}: OrganizeOpts): Promise<void> {
+export async function runOrganizeImports(project: Project, {dryRun, absIncludes, absExcludes}: RunOrganizeImportsOpts): Promise<void> {
     // Force no spaces inside braces (`{A}`). Semicolon handling lives in the
     // dedicated semicolons action so combined runs converge on a final form.
     const formatSettings = {

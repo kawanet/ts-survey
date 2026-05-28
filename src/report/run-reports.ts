@@ -17,7 +17,7 @@ const REPORTS: Record<string, (project: Project, opts: ReportOpts) => Promise<vo
 
 export const reportNames = Object.keys(REPORTS)
 
-export type RunReportsOpts = {
+export interface RunReportsOpts {
     reportNames: string[]
     stream: Writer
     absIncludes: string[]

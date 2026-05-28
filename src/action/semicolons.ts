@@ -10,7 +10,7 @@ import type {Project} from "ts-morph"
 import {selectSourceFiles} from "../lib/source-files.ts"
 import {isSemiEligibleStatement} from "../lib/statement-kinds.ts"
 
-export type SemiOpts = {
+export interface RunSemicolonsOpts {
     dryRun: boolean
     absIncludes: string[]
     absExcludes: string[]
@@ -22,7 +22,7 @@ export type SemiOpts = {
 // removed. Matches the TS LS deletion-context list.
 const ASI_HAZARD_CHARS = new Set(["[", "(", "+", "-", "/", "`", ".", ","])
 
-export async function runSemicolons(project: Project, {dryRun, absIncludes, absExcludes, mode}: SemiOpts): Promise<void> {
+export async function runSemicolons(project: Project, {dryRun, absIncludes, absExcludes, mode}: RunSemicolonsOpts): Promise<void> {
     // Exclude .d.ts to match the semicolons report scope.
     const sourceFiles = selectSourceFiles(project, {absIncludes, absExcludes}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
