@@ -4,17 +4,23 @@
 // Action categories (mirroring the action/ and report/ directories):
 //   action (write): --organize-imports / --remove-semicolons / --insert-semicolons
 //   report (read) : --report <names>
-// Multiple actions can run in one invocation. Reports are exclusive with
-// actions. --remove-semicolons and --insert-semicolons are mutually exclusive.
+// Multiple actions can run in one invocation. Actions are exclusive with
+// --report (write vs read). --remove-semicolons and --insert-semicolons
+// are mutually exclusive.
+//
+// Defaults reflect the "survey" in the package name: when the user
+// supplies neither an action nor an explicit --report, every known
+// report runs. The tsconfig path defaults to ./tsconfig.json.
 //
 // Return value semantics (parseArgs never calls process.exit):
 //   - ParsedArgs       — normal parse, ready to dispatch
 //   - {help: true}     — user asked for --help / -h
-//   - undefined        — argv was empty or contained an error; a specific
-//                        error message has already been written to stderr
-// cli.ts maps these onto the right exit code and stream.
+//   - undefined        — argv contained an error; a specific error
+//                        message has already been written to stderr
 
 import path from "node:path"
+
+import {reportNames as knownReportNames} from "../report/run-reports.ts"
 
 export interface ParsedArgs {
     organizeImports: boolean
@@ -35,7 +41,6 @@ export type ParseArgsResult = ParsedArgs | HelpRequested
 
 export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     if (argv.includes("--help") || argv.includes("-h")) return {help: true}
-    if (argv.length === 0) return undefined
 
     let organizeImports = false
     let removeSemicolons = false
@@ -101,10 +106,10 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         console.error("action flags (--organize-imports / --remove-semicolons / --insert-semicolons) cannot be combined with --report")
         return undefined
     }
-    if (!hasAction && !hasReport) {
-        console.error("no action specified")
-        return undefined
-    }
+
+    // Default: when neither an action nor an explicit --report was given,
+    // run every registered report. This is the "survey" baseline behavior.
+    const effectiveReports = !hasAction && !hasReport ? [...knownReportNames] : requestedReports
 
     // Default to ./tsconfig.json in the current working directory when the
     // path is omitted. Existence is not checked here; initProject() surfaces
@@ -121,7 +126,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         organizeImports,
         removeSemicolons,
         insertSemicolons,
-        reportNames: requestedReports,
+        reportNames: effectiveReports,
         tsconfigPath: absTsconfig,
         dryRun,
         absIncludes,

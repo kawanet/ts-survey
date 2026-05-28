@@ -62,8 +62,18 @@ describe("parseArgs", () => {
         assert.deepEqual(parseArgs(["-h"]), {help: true})
     })
 
-    it("returns undefined on empty argv", () => {
-        assert.equal(parseArgs([]), undefined)
+    it("defaults to running every registered report when no flag is given", () => {
+        const r = parseArgs([])
+        assert.ok(r && !("help" in r))
+        // Survey-style default: every report in the registry runs.
+        assert.ok(r.reportNames.includes("unused-exports"))
+        assert.ok(r.reportNames.includes("semicolons"))
+    })
+
+    it("does not auto-populate reports when an action is specified", () => {
+        const r = parseArgs(["--organize-imports"])
+        assert.ok(r && !("help" in r))
+        assert.deepEqual(r.reportNames, [])
     })
 
     it("returns undefined on an unknown option", () => {

@@ -43,9 +43,10 @@ try {
         const mode: "remove" | "insert" = opts.removeSemicolons ? "remove" : "insert"
         await runSemicolons(project, {...fileOpts, dryRun: opts.dryRun, mode})
     }
-    if (opts.reportNames.length > 0) {
-        await runReports(project, {...fileOpts, reportNames: opts.reportNames, stream: process.stdout})
-    }
+    // When no action was specified, parseArgs fills reportNames with every
+    // registered report (the survey default), so this call is a no-op only
+    // when the user picked actions explicitly.
+    await runReports(project, {...fileOpts, reportNames: opts.reportNames, stream: process.stdout})
 } catch (e) {
     console.error(e instanceof Error ? e.message : String(e))
     process.exit(1)
