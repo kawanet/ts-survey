@@ -11,6 +11,7 @@ export function usage(): string {
         "",
         "Actions (write; multiple can be combined, fixed execution order):",
         "  --organize-imports          Apply the Language Service organizeImports",
+        "  --indent <N>                Rewrite leading whitespace to N spaces per indent level",
         "  --remove-semicolons         Strip trailing `;` from all ASI-eligible statements",
         "  --insert-semicolons         Append trailing `;` to all ASI-eligible statements",
         "                              (--remove-semicolons and --insert-semicolons are mutually exclusive)",

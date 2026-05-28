@@ -10,12 +10,12 @@ MJS_DST := ../dist/ts-survey.mjs
 MJS_CONFIG := ./rollup-mjs.config.ts
 
 # Public runtime named exports that must be verified in every bundle.
-NAMED_EXPORTS := initProject runOrganizeImports runSemicolons runReports
+NAMED_EXPORTS := initProject runOrganizeImports runIndent runSemicolons runReports
 
 # Bundle should contain only this package's own src/ — ts-morph and minimatch
 # are externalized. A noticeably larger output means an accidental bundling
 # of a transitive dep; fail the build so it cannot slip in.
-MAX_BYTES := 20000
+MAX_BYTES := 30000
 
 ALL := $(MJS_DST)
 

@@ -2,7 +2,8 @@ import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
-import {detectIndent, runReportIndent} from "./indent.ts"
+import {detectIndent} from "../lib/detect-indent.ts"
+import {runReportIndent} from "./indent.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/indents-mixed/tsconfig.json")
 

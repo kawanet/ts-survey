@@ -21,6 +21,10 @@ export interface RunSemicolonsOpts extends RunOrganizeImportsOpts {
     mode: "remove" | "insert"
 }
 
+export interface RunIndentOpts extends RunOrganizeImportsOpts {
+    width: number
+}
+
 export interface RunReportsOpts {
     absIncludes: string[]
     absExcludes: string[]
@@ -33,5 +37,7 @@ export declare function initProject(tsconfigPath: string): Project
 export declare function runOrganizeImports(project: Project, opts: RunOrganizeImportsOpts): Promise<void>
 
 export declare function runSemicolons(project: Project, opts: RunSemicolonsOpts): Promise<void>
+
+export declare function runIndent(project: Project, opts: RunIndentOpts): Promise<void>
 
 export declare function runReports(project: Project, opts: RunReportsOpts): Promise<void>

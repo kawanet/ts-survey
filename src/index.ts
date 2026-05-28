@@ -4,6 +4,7 @@
 
 import {Project} from "ts-morph"
 
+export {runIndent} from "./action/indent.ts"
 export {runOrganizeImports} from "./action/organize-imports.ts"
 export {runSemicolons} from "./action/semicolons.ts"
 export {runReports} from "./report/run-reports.ts"

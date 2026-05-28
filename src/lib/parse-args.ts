@@ -26,6 +26,7 @@ export interface ParsedArgs {
     organizeImports: boolean
     removeSemicolons: boolean
     insertSemicolons: boolean
+    indentWidth: number | null
     reportNames: string[]
     tsconfigPath: string
     dryRun: boolean
@@ -45,6 +46,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     let organizeImports = false
     let removeSemicolons = false
     let insertSemicolons = false
+    let indentWidth: number | null = null
     let tsconfigPath: string | null = null
     let dryRun = false
     const includeGlobs: string[] = []
@@ -62,6 +64,18 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
             removeSemicolons = true
         } else if (a === "--insert-semicolons") {
             insertSemicolons = true
+        } else if (a === "--indent") {
+            const v = argv[++i]
+            if (!v || v.startsWith("-")) {
+                console.error("--indent requires a positive integer (e.g. --indent 4)")
+                return undefined
+            }
+            const n = Number(v)
+            if (!Number.isInteger(n) || n <= 0) {
+                console.error(`--indent expects a positive integer; got: ${v}`)
+                return undefined
+            }
+            indentWidth = n
         } else if (a === "--report") {
             const v = argv[++i]
             if (!v || v.startsWith("-")) {
@@ -100,7 +114,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         console.error("--remove-semicolons and --insert-semicolons are mutually exclusive")
         return undefined
     }
-    const hasAction = organizeImports || removeSemicolons || insertSemicolons
+    const hasAction = organizeImports || removeSemicolons || insertSemicolons || indentWidth !== null
     const hasReport = requestedReports.length > 0
     if (hasAction && hasReport) {
         console.error("action flags (--organize-imports / --remove-semicolons / --insert-semicolons) cannot be combined with --report")
@@ -126,6 +140,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         organizeImports,
         removeSemicolons,
         insertSemicolons,
+        indentWidth,
         reportNames: effectiveReports,
         tsconfigPath: absTsconfig,
         dryRun,

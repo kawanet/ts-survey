@@ -4,11 +4,13 @@
 // to the action and report functions exported by ./index.ts in a fixed
 // order (not input order):
 //   1. --organize-imports
-//   2. --remove-semicolons / --insert-semicolons
-// Placing semicolons after organize-imports lets combined runs converge on
-// the same final shape regardless of how flags were written.
+//   2. --indent <N>
+//   3. --remove-semicolons / --insert-semicolons
+// Organize-imports first reorders the structure; indent rewrites the
+// leading whitespace once that structure is final; the semicolons pass
+// only touches trailing characters and stays last.
 
-import {initProject, runOrganizeImports, runReports, runSemicolons} from "./index.ts"
+import {initProject, runIndent, runOrganizeImports, runReports, runSemicolons} from "./index.ts"
 import {parseArgs} from "./lib/parse-args.ts"
 import {usage} from "./lib/usage.ts"
 
@@ -38,6 +40,9 @@ try {
 
     if (opts.organizeImports) {
         await runOrganizeImports(project, {...fileOpts, dryRun: opts.dryRun})
+    }
+    if (opts.indentWidth !== null) {
+        await runIndent(project, {...fileOpts, dryRun: opts.dryRun, width: opts.indentWidth})
     }
     if (opts.removeSemicolons || opts.insertSemicolons) {
         const mode: "remove" | "insert" = opts.removeSemicolons ? "remove" : "insert"
