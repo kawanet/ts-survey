@@ -6,11 +6,10 @@
 
 import type {Project} from "ts-morph"
 
+import {detectIndent, type IndentWidth} from "../lib/detect-indent.ts"
 import {writeRecommendation} from "../lib/recommendation.ts"
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import type {ReportOpts} from "./unused-exports.ts"
-
-type Width = "tab" | number
 
 type Bucket = {lines: number; files: Set<string>; topPath: string; topLines: number}
 
@@ -18,10 +17,10 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
     const sourceFiles = selectSourceFiles(project, {absIncludes, absExcludes}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     // Per-file map: leading width → number of lines in that file at that width.
-    type PerFile = {path: string; counts: Map<Width, number>}
+    type PerFile = {path: string; counts: Map<IndentWidth, number>}
     const perFile: PerFile[] = []
     for (const sf of sourceFiles) {
-        const counts = countLeadingWidths(sf.getFullText())
+        const counts = detectIndent(sf.getFullText())
         if (counts.size === 0) continue
         perFile.push({path: displayPath(sf.getFilePath()), counts})
     }
@@ -29,7 +28,7 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
     // Aggregate per width: total lines, set of files, and "example" file
     // (the one contributing the most lines at this width; ties broken
     // lexicographically by path).
-    const buckets = new Map<Width, Bucket>()
+    const buckets = new Map<IndentWidth, Bucket>()
     for (const f of perFile) {
         for (const [width, count] of f.counts) {
             let b = buckets.get(width)
@@ -47,14 +46,13 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
     }
 
     // Numeric widths ascending, then "tab" last.
-    const widths: Width[] = []
     const numerics = [...buckets.keys()].filter((k): k is number => typeof k === "number").sort((a, b) => a - b)
-    widths.push(...numerics)
+    const widths: IndentWidth[] = [...numerics]
     if (buckets.has("tab")) widths.push("tab")
 
-    // Recommendation: width with the most distinct files. Strict ties produce
-    // no recommendation (the choice would be arbitrary).
-    let recommendWidth: Width | undefined
+    // Recommendation: width with the most distinct files. A strict tie
+    // produces no recommendation (the choice would be arbitrary).
+    let recommendWidth: IndentWidth | undefined
     let maxFiles = 0
     for (const w of widths) {
         const fc = buckets.get(w)!.files.size
@@ -84,26 +82,4 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
         stream.write("\n")
     }
     console.error(`report indent: ${perFile.length} files counted / ${sourceFiles.length} files total`)
-}
-
-// Counts leading whitespace widths line by line. Empty / all-whitespace lines
-// and JSDoc continuation (` * ...`) lines are excluded so they don't
-// pollute the buckets.
-export function countLeadingWidths(text: string): Map<Width, number> {
-    const counts = new Map<Width, number>()
-    for (const line of text.split("\n")) {
-        if (line.length === 0) continue
-        const first = line[0]
-        if (first === "\t") {
-            counts.set("tab", (counts.get("tab") ?? 0) + 1)
-            continue
-        }
-        if (first !== " ") continue
-        let n = 0
-        while (n < line.length && line[n] === " ") n++
-        if (n === line.length) continue
-        if (line[n] === "*") continue
-        counts.set(n, (counts.get(n) ?? 0) + 1)
-    }
-    return counts
 }

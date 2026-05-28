@@ -14,7 +14,7 @@ import fs from "node:fs/promises"
 import {Node} from "ts-morph"
 import type {Project, SourceFile} from "ts-morph"
 
-import {detectIndent, type IndentUnit} from "../lib/detect-indent.ts"
+import {detectIndent, type IndentCounts, type IndentWidth} from "../lib/detect-indent.ts"
 import {selectSourceFiles} from "../lib/source-files.ts"
 
 export interface RunIndentOpts {
@@ -54,8 +54,9 @@ export async function runIndent(project: Project, {dryRun, absIncludes, absExclu
 }
 
 function rewriteIndent(sf: SourceFile, text: string, target: number): string {
-    const detected = detectIndent(text)
-    if (!detected) return text
+    const counts = detectIndent(text)
+    if (counts.size === 0) return text
+    const unit = pickSourceUnit(counts)
 
     // Collect template-literal ranges before we touch the file so the
     // positions remain valid for the duration of the rewrite.
@@ -71,7 +72,7 @@ function rewriteIndent(sf: SourceFile, text: string, target: number): string {
     let changed = false
     for (let li = 0; li < lines.length; li++) {
         const original = lines[li]
-        const updated = rewriteLine(original, pos, detected.unit, target, tplRanges)
+        const updated = rewriteLine(original, pos, unit, target, tplRanges)
         if (updated !== original) {
             lines[li] = updated
             changed = true
@@ -83,7 +84,27 @@ function rewriteIndent(sf: SourceFile, text: string, target: number): string {
     return changed ? lines.join("\n") : text
 }
 
-function rewriteLine(line: string, lineStart: number, sourceUnit: IndentUnit, target: number, tplRanges: [number, number][]): string {
+// Picks the per-file source unit to rescale against. "tab" wins when tab
+// lines outnumber space lines; otherwise the smallest numeric width of at
+// least 2 is taken (a `>= 2` floor keeps a stray 1-space line from
+// dragging the unit down across the whole file). Falls back to the
+// smallest numeric width when no value reaches 2.
+function pickSourceUnit(counts: IndentCounts): IndentWidth {
+    const tabLines = counts.get("tab") ?? 0
+    let spaceLines = 0
+    let unit = 0
+    let smallest = 0
+    for (const [k, n] of counts) {
+        if (k === "tab") continue
+        spaceLines += n
+        if (smallest === 0 || k < smallest) smallest = k
+        if (k >= 2 && (unit === 0 || k < unit)) unit = k
+    }
+    if (tabLines > spaceLines) return "tab"
+    return unit !== 0 ? unit : smallest
+}
+
+function rewriteLine(line: string, lineStart: number, sourceUnit: IndentWidth, target: number, tplRanges: [number, number][]): string {
     if (line.length === 0) return line
     for (const [s, e] of tplRanges) {
         if (lineStart >= s && lineStart < e) return line
