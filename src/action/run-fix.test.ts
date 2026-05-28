@@ -4,8 +4,7 @@ import {Project} from "ts-morph"
 
 import {runFix} from "./run-fix.ts"
 
-// Silences console.log / console.error output the action writes for
-// "updated:" / summary lines so the test output stays clean.
+// Silences the "updated:" / summary writes for clean test output.
 function quiet<T>(fn: () => Promise<T>): Promise<T> {
     const origLog = console.log
     const origErr = console.error
@@ -88,10 +87,8 @@ describe("runFix", () => {
                 report: {},
             }),
         )
-        // organizeImports drops `unused` because it has no reference here.
-        // ts-morph's organizeImports follows its default bracket-spacing,
-        // which inserts spaces — that's fine; the assertion only checks
-        // the dropped name and the surviving import.
+        // Assertion only checks the dropped name and surviving import;
+        // brace-spacing is not pinned here.
         const text = sf.getFullText()
         assert.match(text, /import \{ ?used ?\}/)
         assert.equal(/unused/.test(text), false)
@@ -165,8 +162,7 @@ describe("runFix", () => {
                 report: {semicolons: {semicolons: "on"}},
             }),
         )
-        // The action completed without throwing despite dryRun being on; the
-        // in-memory FS would have surfaced a real fs.writeFile attempt.
+        // No throw → no real-fs write attempt; in-memory FS would have surfaced it.
         assert.match(sf.getFullText(), /const a = 1;\n/)
     })
 })

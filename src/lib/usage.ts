@@ -1,7 +1,5 @@
-// CLI help text. Returned as a string so the caller (cli.ts) can decide
-// whether to write it to stdout (--help) or stderr (after an argv error).
-// `reportNames` / `formatNames` are pulled from their respective registry
-// files so help stays in sync with whatever names are wired up.
+// CLI help text. Name lists come from the report / format registries
+// so help stays in sync with wired-up entries.
 
 import {formatNames} from "../format/run-format.ts"
 import {reportNames} from "../report/report-names.ts"

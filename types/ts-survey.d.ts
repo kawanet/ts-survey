@@ -6,23 +6,18 @@ import type {Project} from "ts-morph";
 
 export {}; // external module indicator
 
-// Internal sink contract used by report writers. Consumers never construct
-// or name this directly; they pass `process.stdout` or any object with a
-// `write(line)` method as `RunReportsOpts.stream`.
+// Sink contract for report writers. Callers pass `process.stdout` or
+// any object with `write(line)`.
 type Writer = {write: (line: string) => void}
 
-// Common base for every entry. Not exported — consumers reach the fields
-// through the leaf Opts interfaces below.
+// Common base for every entry. Leaf Opts interfaces inherit it.
 interface TsSurveyOpts {
     absIncludes: string[]
     absExcludes: string[]
 }
 
-// The four interfaces below describe the *shape* of a recommendation. They
-// are not runtime function inputs anymore — the dedicated `run<X>` exports
-// were retired in favor of the unified `runFix`. They survive as the value
-// type of the matching `TsSurveyReport` slot, so that a recommendation
-// always carries the same field that an old-style action would have taken.
+// Recommendation shapes. Not runtime inputs — they describe the value
+// type of each `TsSurveyReport` slot.
 
 export interface RunSemicolonsOpts {
     semicolons: "on" | "off"
@@ -44,9 +39,8 @@ export interface RunBracketSpacingOpts {
     bracketSpacing: "on" | "off"
 }
 
-// Every report module that runReports knows about. Adding a report
-// means extending this union, the runtime list in
-// src/report/report-names.ts, and the dispatch in src/report/run-reports.ts.
+// Every report runReports knows about. Pair with src/report/report-names.ts
+// (runtime list) and src/report/run-reports.ts (dispatch).
 export type TsSurveyReportName =
     | "unused-exports"
     | "semicolons"
@@ -60,10 +54,8 @@ export interface RunReportsOpts extends TsSurveyOpts {
     reportNames: TsSurveyReportName[]
 }
 
-// Recommendations collected by runReports, keyed by the report that
-// produced them. Each value is the partial of the matching action's
-// Opts that the report would suggest applying; missing keys mean the
-// report didn't run or had nothing to recommend.
+// Per-report recommendations. A missing key means the report didn't run
+// or had nothing to recommend.
 export interface TsSurveyReport {
     semicolons?: Partial<RunSemicolonsOpts>
     indent?: Partial<RunIndentOpts>
@@ -72,23 +64,16 @@ export interface TsSurveyReport {
     bracketSpacing?: Partial<RunBracketSpacingOpts>
 }
 
-// Input to the unified `runFix` action. `report` carries the recommended
-// defaults; any field set on `RunFixOpts` itself overrides the matching
-// slot of the report. An omitted override means "follow the report"; a
-// report slot that is itself empty means "leave that aspect alone".
-//
-// `organizeImports` defaults to "on" when omitted — `--fix` always
-// organizes imports unless the user opts out with `--organize-imports off`.
+// Input to `runFix`. `report` provides defaults; the top-level overrides
+// win per field. `organizeImports` defaults to "on" when omitted.
 export interface RunFixOpts extends TsSurveyOpts {
     dryRun: boolean
     report: TsSurveyReport
     organizeImports?: "on" | "off"
     indent?: number
     semicolons?: "on" | "off"
-    // CR-only line endings are not representable in the TS Language Service's
-    // formatter (`newLineCharacter` accepts `\n` and `\r\n` only). `runFix`
-    // therefore narrows the override surface to those two values; a `cr`
-    // recommendation from the report is reported on stderr but not applied.
+    // LS `newLineCharacter` only accepts \n / \r\n; a `cr` recommendation
+    // is logged but not applied.
     newLine?: "lf" | "crlf"
     bracketSpacing?: "on" | "off"
 }

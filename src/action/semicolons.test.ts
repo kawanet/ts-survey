@@ -1,8 +1,5 @@
-// Reuses the original semicolons-action coverage against the unified
-// runFix entry point. The self-implemented ASI-hazard detector is gone
-// (LS handles it internally), so the `hasAsiHazardAfter` describe block
-// from the old file is retired; every behavioral test below survives and
-// now exercises `runFix({semicolons: "on"|"off"})`.
+// Semicolons-action coverage retargeted at runFix({semicolons}).
+// hasAsiHazardAfter tests are retired with the detector function itself.
 
 import {strict as assert} from "node:assert"
 import path from "node:path"
@@ -125,12 +122,9 @@ describe("runFix --semicolons off keeps `;` at ASI-hazard sites", () => {
 
 describe("runFix --semicolons off and do-while statements", () => {
     it("removes the trailing `;` after `} while (...)` (LS divergence from the old hand-rolled action)", async () => {
-        // The retired self-implemented `isSemiEligibleStatement` filter
-        // explicitly kept `;` on do-while statements (grammar-required).
-        // The TS Language Service's deletion-context rule does not treat
-        // do-while as special and strips the `;` when no ASI hazard
-        // follows. We accept the LS outcome under the "delegate to LS"
-        // mandate (#165), and pin it here so the divergence is visible.
+        // The LS deletion-context rule does not exempt do-while; the
+        // retired hand-rolled filter did. Pinned under #165's
+        // delegate-to-LS mandate.
         const project = new Project({useInMemoryFileSystem: true})
         const sf = project.createSourceFile("do-while.ts", ["let x = 0;", "do {", "  x++", "} while (x < 2);", "const y = x;"].join("\n"))
 

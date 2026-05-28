@@ -1,8 +1,6 @@
-// Reuses the original organize-imports-action coverage against the
-// unified runFix entry point. The "uses braces without surrounding
-// spaces" test now pins the result via `--bracket-spacing off` (an
-// explicit override) — the old action hard-coded that setting at the
-// call site; under runFix it is just one slot of the merged settings.
+// organize-imports coverage retargeted at runFix. The {A} style test
+// pins the outcome via `--bracket-spacing off`; the old action
+// hard-coded it.
 
 import {strict as assert} from "node:assert"
 import path from "node:path"
@@ -34,11 +32,8 @@ describe("runFix (organize-imports path, dry-run, sample/basic)", () => {
 
     it("uses braces without surrounding spaces (`{A}` style) when bracket-spacing off is in effect", async () => {
         const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
-        // Old runOrganizeImports hard-coded
-        // insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces:false.
-        // The unified action drives this slot from the merged
-        // bracket-spacing recommendation/override instead, so pin it
-        // explicitly to reproduce the original outcome.
+        // Old action hard-coded brace-spacing off; runFix drives it via
+        // the merged settings, so pin the override here.
         await runFix(project, {dryRun: true, absIncludes: [], absExcludes: [], report: {}, bracketSpacing: "off"})
 
         const text = project.getSourceFile(INDEX)!.getFullText()

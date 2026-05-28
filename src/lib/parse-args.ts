@@ -1,45 +1,12 @@
-// CLI argument parsing. The entry point is the only place that reads
-// process.argv; this module receives the slice as input.
-//
-// Two operating modes:
-//   report (read):  the default. Walk the project, emit Markdown.
-//                   Switches: --report <names>, --format <name>.
-//   fix (write):    apply the report's recommendations to disk via the
-//                   Language Service formatter and organizeImports.
-//                   Switch: --fix, plus per-field overrides such as
-//                   --indent N, --semicolons on|off, --new-line lf|crlf,
-//                   --bracket-spacing on|off, --organize-imports on|off.
-//
-// Implicit-mode rules mirror how an explicit --format implies report
-// mode: passing any fix-side flag (override or --fix itself) puts the
-// CLI in fix mode even if --fix is omitted. Mixing the two sides is an
-// error; the conflict check covers both explicit and implicit triggers.
-//
-// Defaults reflect the "survey" in the package name: when the user
-// supplies neither a report flag nor a fix flag, every known report
-// runs. The tsconfig path defaults to ./tsconfig.json (i.e. equivalent
-// to `-p .`).
-//
-// Project path resolution mirrors `tsc -p`: the value is either a
-// `.json` file or a directory containing one. A non-`.json` value is
-// treated as a directory and `/tsconfig.json` is appended. There is
-// no bare-positional shortcut — every non-flag word is rejected so a
-// stray argument doesn't get silently misread as a tsconfig path.
-//
-// Return value semantics (parseArgs never calls process.exit):
-//   - ParsedArgs       — normal parse, ready to dispatch
-//   - {help: true}     — user asked for --help / -h
-//   - undefined        — argv contained an error; a specific error
-//                        message has already been written to stderr
+// argv → ParsedArgs. Two modes (report / fix) are mutually exclusive;
+// any fix-side override implicitly enables --fix, mirroring how --format
+// implies --report. tsconfig path mirrors `tsc -p`.
 
 import path from "node:path"
 
 import {reportNames as knownReportNames} from "../report/report-names.ts"
 
-// Fix-mode overrides. Each field is independent; an absent field means
-// "follow the report's recommendation"; a set field overrides the
-// matching slot. `newLine` is narrowed to lf|crlf because the LS
-// formatter cannot emit CR-only newlines.
+// `newLine` is narrowed to lf|crlf because LS cannot emit CR-only.
 export interface FixOverrides {
     organizeImports?: "on" | "off"
     indent?: number
@@ -49,16 +16,12 @@ export interface FixOverrides {
 }
 
 export interface ParsedArgs {
-    // True when fix mode is active. Set by --fix or by any per-field
-    // override (the implicit-fix rule).
     fix: boolean
     fixOverrides: FixOverrides
     reportNames: string[]
     format: string | null
-    // True when neither a report flag nor a fix flag was given. The
-    // default-survey path uses this to decide whether to append the
-    // recommendation / `.prettierrc` summary blocks under the per-report
-    // tables.
+    // True only when nothing was specified; gates the recommendation +
+    // .prettierrc blocks under the per-report Markdown.
     surveyDefault: boolean
     tsconfigPath: string
     dryRun: boolean
@@ -82,9 +45,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     let dryRun = false
     const includeGlobs: string[] = []
     const excludeGlobs: string[] = []
-    // Report names accumulate in input order with de-duplication. Both
-    // comma-separated values and repeated --report flags are accepted.
-    // Whether each name is known is decided by runReports later.
+    // De-duplicated in input order. Name validation lives in runReports.
     const requestedReports: string[] = []
 
     for (let i = 0; i < argv.length; i++) {
@@ -118,9 +79,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
             }
             overrides.indent = n
         } else if (a === "--new-line") {
-            // CR-only is reportable but not applicable: the TS LS formatter
-            // accepts \n and \r\n only. We reject `cr` here so the user sees
-            // a clear error instead of a silent fallback.
+            // `cr` rejected: LS formatter accepts \n / \r\n only.
             const v = argv[++i]
             if (v !== "lf" && v !== "crlf") {
                 console.error(`--new-line expects 'lf' or 'crlf'; got: ${v ?? "(missing)"}`)
@@ -154,8 +113,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
                 console.error("--format requires a value (e.g. --format prettier)")
                 return undefined
             }
-            // Whether the name is known is decided by selectFormat later
-            // (mirroring how --report names are validated by runReports).
+            // Name validation lives in selectFormat (same pattern as --report).
             format = v
         } else if (a === "--include") {
             const v = takeGlobValue(argv, ++i, "--include")
@@ -180,15 +138,12 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
             console.error(`unknown option: ${a}`)
             return undefined
         } else {
-            // The tsconfig path goes through -p / --project; bare words
-            // are rejected outright so a misspelt flag or stray arg can't
-            // silently override the project path.
+            // Bare words rejected so a misspelt flag can't become a path.
             console.error(`unexpected argument: ${a} (use -p / --project to set the tsconfig path)`)
             return undefined
         }
     }
 
-    // Validate flag combinations before checking inputs to give actionable errors.
     const hasOverride = Object.keys(overrides).length > 0
     const fix = fixExplicit || hasOverride
     const hasReport = requestedReports.length > 0
@@ -202,21 +157,13 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         return undefined
     }
 
-    // Default: when no fix flag, no --report, and no --format was given,
-    // run every registered report. This is the "survey" baseline. The
-    // surveyDefault flag tells cli.ts whether to append the recommendation
-    // / `.prettierrc` summary blocks.
+    // Survey baseline: nothing specified → run every registered report.
     const surveyDefault = !fix && !hasReport && !hasFormat
     const effectiveReports = surveyDefault ? [...knownReportNames] : requestedReports
 
-    // Path resolution mirrors `tsc -p`: a non-`.json` value is read as a
-    // directory and `tsconfig.json` is appended. The omitted-path default
-    // is equivalent to `-p .`. Existence isn't checked here; initProject()
-    // surfaces a missing file as a normal throw caught by the CLI.
     const absTsconfig = resolveTsconfigPath(tsconfigPath ?? ".")
 
-    // Resolve include/exclude globs against the tsconfig directory so the same
-    // command yields the same target set regardless of cwd.
+    // Resolve globs against the tsconfig dir so cwd doesn't shift the target set.
     const tsconfigDir = path.dirname(absTsconfig)
     const absIncludes = includeGlobs.map((g) => resolveGlob(g, tsconfigDir))
     const absExcludes = excludeGlobs.map((g) => resolveGlob(g, tsconfigDir))
@@ -248,9 +195,8 @@ function resolveGlob(pattern: string, baseDir: string): string {
     return path.resolve(baseDir, pattern)
 }
 
-// Mirrors `tsc -p`: a `.json` value is read as a file path, anything
-// else is read as a directory and `tsconfig.json` is appended. This
-// makes `-p .` equivalent to the omitted-path default.
+// Mirrors `tsc -p`: a non-`.json` value is treated as a directory and
+// `tsconfig.json` is appended.
 function resolveTsconfigPath(input: string): string {
     const absolute = path.resolve(input)
     if (input.endsWith(".json")) return absolute

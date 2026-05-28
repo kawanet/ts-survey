@@ -67,12 +67,9 @@ describe("runFix --indent (dry-run, in-memory)", () => {
 
     it("normalizes binary-operator continuation lines to the parent block's indent level", async () => {
         const project = new Project({useInMemoryFileSystem: true})
-        // The old hand-rolled rewriter preserved a 5-space binary-operator
-        // alignment unchanged ("skip non-multiples of the unit"). The LS
-        // formatter does not preserve hand-rolled alignment — it re-indents
-        // the continuation to the parent block's level + the configured
-        // continuation indent. The test pins the LS outcome so we notice
-        // a future change either way; Prettier behaves identically.
+        // LS re-indents continuation lines (parent block + continuation
+        // step). Hand-rolled alignment such as the 5-space `     2` below
+        // is not preserved; Prettier matches.
         const sf = project.createSourceFile("f.ts", ["function f() {", "  const x = 1 +", "     2", "}", ""].join("\n"))
         await runFix(project, opts(4))
         const lines = sf.getFullText().split("\n")

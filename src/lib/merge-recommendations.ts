@@ -1,35 +1,18 @@
-// Resolves a TsSurveyReport + the CLI's fix overrides into the concrete
-// settings the `runFix` action needs. Lives as a pure helper so the
-// merge logic can be unit-tested without invoking ts-morph or touching
-// the filesystem.
-//
-// Precedence per field: override wins, otherwise the report's
-// recommendation, otherwise the field is left undefined (= "leave that
-// aspect alone, the LS formatter keeps its default").
-//
-// Two concerns are kept separate from the FormatCodeSettings the LS
-// consumes:
-//   - organizeImports — gated by its own boolean (defaults to true under
-//     `--fix`, can be disabled with `--organize-imports off`).
-//   - newLineNormalize — the LS only uses `newLineCharacter` for inserted
-//     text, so existing terminators must be normalized via a separate
-//     pass over the final file content.
+// Pure helper: report + overrides → settings runFix consumes.
+// Per-field precedence is override > recommendation > undefined.
 
 import {ts} from "ts-morph"
 
 import type {FixOverrides} from "./parse-args.ts"
 import type {ResolvedSettings, TsSurveyReportForMerge} from "./types.ts"
 
-// FormatCodeSettings is a `readonly` interface; we build a mutable bag
-// here and cast at the return site. The runtime shape is byte-identical.
+// FormatCodeSettings is readonly; build mutably and cast at the return.
 type MutableFormatSettings = {-readonly [K in keyof ResolvedSettings["formatSettings"]]: ResolvedSettings["formatSettings"][K]}
 
 export function mergeRecommendations(report: TsSurveyReportForMerge, overrides: FixOverrides): ResolvedSettings {
     const formatSettings: MutableFormatSettings = {}
 
-    // Indent: override wins, else recommended width. `convertTabsToSpaces`
-    // is pinned to true whenever a width applies — the recommender always
-    // speaks in spaces, and mixing tabs in would defeat the override.
+    // convertTabsToSpaces is pinned: the recommender speaks spaces only.
     const indent = overrides.indent ?? report.indent?.width
     if (typeof indent === "number") {
         formatSettings.indentSize = indent
@@ -37,9 +20,6 @@ export function mergeRecommendations(report: TsSurveyReportForMerge, overrides: 
         formatSettings.convertTabsToSpaces = true
     }
 
-    // Semicolons: map our on|off vocabulary onto ts.SemicolonPreference.
-    // The "Ignore" value (LS's default) is what we want when neither side
-    // speaks, so we just skip the field.
     const semicolons = overrides.semicolons ?? report.semicolons?.semicolons
     if (semicolons === "on") {
         formatSettings.semicolons = ts.SemicolonPreference.Insert
@@ -47,8 +27,6 @@ export function mergeRecommendations(report: TsSurveyReportForMerge, overrides: 
         formatSettings.semicolons = ts.SemicolonPreference.Remove
     }
 
-    // Bracket spacing maps 1:1 to the FormatCodeSettings field of the
-    // same intent.
     const bracketSpacing = overrides.bracketSpacing ?? report.bracketSpacing?.bracketSpacing
     if (bracketSpacing === "on") {
         formatSettings.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = true
@@ -56,10 +34,7 @@ export function mergeRecommendations(report: TsSurveyReportForMerge, overrides: 
         formatSettings.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false
     }
 
-    // New line: the override is narrowed to lf|crlf in parse-args because
-    // the LS formatter cannot emit CR-only newlines. A `cr` recommendation
-    // from the report is acknowledged (returned in `crRecommended`) but not
-    // applied — runFix logs it for the operator instead.
+    // `cr` recommendation surfaces via crRecommended; the LS cannot emit it.
     const reportedNewLine = report.newLine?.newLine
     const crRecommended = overrides.newLine === undefined && reportedNewLine === "cr"
     const effectiveNewLine = overrides.newLine ?? (reportedNewLine === "cr" ? undefined : reportedNewLine)
@@ -72,20 +47,14 @@ export function mergeRecommendations(report: TsSurveyReportForMerge, overrides: 
         newLineNormalize = "\r\n"
     }
 
-    // organize-imports defaults to true under --fix; --organize-imports off
-    // is the only way to suppress it.
     const organizeImports = overrides.organizeImports !== "off"
 
     return {formatSettings, organizeImports, newLineNormalize, crRecommended}
 }
 
-// Applies the line-terminator normalization that the LS formatter does
-// not handle for pre-existing terminators. Both CR-only and CRLF are
-// collapsed to the target so the file ends up uniform.
+// Normalizes pre-existing terminators that the LS won't touch.
 export function normalizeNewLines(text: string, target: "\n" | "\r\n"): string {
-    // Two-step replace: collapse every CRLF and lone CR to LF first, then
-    // rewrite to CRLF only if the target asks for it. This avoids the
-    // double-rewrite hazard of `replace(\r\n, \r\n)` on already-CRLF text.
+    // Collapse to LF first to avoid double-rewriting already-CRLF text.
     const normalized = text.replace(/\r\n|\r/g, "\n")
     return target === "\n" ? normalized : normalized.replace(/\n/g, "\r\n")
 }
