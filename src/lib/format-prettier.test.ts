@@ -86,6 +86,16 @@ describe("writePrettierConfig", () => {
         const json = JSON.parse(capture({newLine: {newLine: "crlf"}}))
         assert.equal(json.endOfLine, "crlf")
     })
+
+    it("maps bracketSpacing.bracketSpacing=on → bracketSpacing: true", () => {
+        const json = JSON.parse(capture({bracketSpacing: {bracketSpacing: "on"}}))
+        assert.equal(json.bracketSpacing, true)
+    })
+
+    it("maps bracketSpacing.bracketSpacing=off → bracketSpacing: false", () => {
+        const json = JSON.parse(capture({bracketSpacing: {bracketSpacing: "off"}}))
+        assert.equal(json.bracketSpacing, false)
+    })
 })
 
 describe("writePrettierMarkdown", () => {

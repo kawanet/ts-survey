@@ -25,6 +25,7 @@ function buildTsSurveyFlags(report: TsSurveyReport): string[] {
     if (typeof report.indent?.width === "number") flags.push(`--indent ${report.indent.width}`)
     if (report.memberSeparators?.separator) flags.push(`--member-separator ${report.memberSeparators.separator}`)
     if (report.newLine?.newLine) flags.push(`--new-line ${report.newLine.newLine}`)
+    if (report.bracketSpacing?.bracketSpacing) flags.push(`--bracket-spacing ${report.bracketSpacing.bracketSpacing}`)
     return flags
 }
 

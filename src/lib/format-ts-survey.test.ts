@@ -34,15 +34,20 @@ describe("writeTsSurveyCommand", () => {
         assert.equal(out, "ts-survey \\\n  --new-line lf\n")
     })
 
+    it("maps bracketSpacing.bracketSpacing → --bracket-spacing V", () => {
+        const out = capture((s) => writeTsSurveyCommand({bracketSpacing: {bracketSpacing: "on"}}, s))
+        assert.equal(out, "ts-survey \\\n  --bracket-spacing on\n")
+    })
+
     it("combines all recommendations in a fixed order", () => {
         const out = capture((s) =>
             writeTsSurveyCommand(
                 // Input keys are intentionally reversed; the output order is fixed.
-                {newLine: {newLine: "lf"}, memberSeparators: {separator: "none"}, indent: {width: 4}, semicolons: {mode: "remove"}},
+                {bracketSpacing: {bracketSpacing: "on"}, newLine: {newLine: "lf"}, memberSeparators: {separator: "none"}, indent: {width: 4}, semicolons: {mode: "remove"}},
                 s,
             ),
         )
-        assert.equal(out, "ts-survey \\\n  --remove-semicolons --indent 4 --member-separator none --new-line lf\n")
+        assert.equal(out, "ts-survey \\\n  --remove-semicolons --indent 4 --member-separator none --new-line lf --bracket-spacing on\n")
     })
 
     it("emits a bare `ts-survey` when nothing was recommended", () => {

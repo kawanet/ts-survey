@@ -11,6 +11,8 @@
 //   memberSeparators.separator === "comma"  → semi: false, trailingComma: "all"
 //   memberSeparators.separator === "none"   → semi: false, trailingComma: "none"
 //   newLine.newLine === <lf|crlf|cr>        → endOfLine: <lf|crlf|cr>
+//   bracketSpacing.bracketSpacing === "on"  → bracketSpacing: true
+//   bracketSpacing.bracketSpacing === "off" → bracketSpacing: false
 // Reports that didn't recommend anything contribute no fields, so an
 // empty TsSurveyReport renders as `{}`.
 
@@ -51,6 +53,8 @@ function buildPrettierOptions(report: TsSurveyReport): PrettierOptions {
         else if (ms === "none") opts.trailingComma = "none"
     }
     if (report.newLine?.newLine) opts.endOfLine = report.newLine.newLine
+    if (report.bracketSpacing?.bracketSpacing === "on") opts.bracketSpacing = true
+    else if (report.bracketSpacing?.bracketSpacing === "off") opts.bracketSpacing = false
     return opts
 }
 

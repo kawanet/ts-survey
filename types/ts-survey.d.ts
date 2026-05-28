@@ -46,6 +46,13 @@ export interface RunNewLineOpts extends RunOrganizeImportsOpts {
     newLine: "lf" | "crlf" | "cr"
 }
 
+// `runBracketSpacing` action isn't implemented yet. The report returns
+// the Partial so the formatters can render `--bracket-spacing on|off`
+// and Prettier's `bracketSpacing`.
+export interface RunBracketSpacingOpts extends RunOrganizeImportsOpts {
+    bracketSpacing: "on" | "off"
+}
+
 export interface RunReportsOpts extends TsSurveyOpts {
     stream: Writer
     reportNames: string[]
@@ -60,6 +67,7 @@ export interface TsSurveyReport {
     indent?: Partial<RunIndentOpts>
     memberSeparators?: Partial<RunMemberSeparatorsOpts>
     newLine?: Partial<RunNewLineOpts>
+    bracketSpacing?: Partial<RunBracketSpacingOpts>
 }
 
 export declare function initProject(tsconfigPath: string): Project
