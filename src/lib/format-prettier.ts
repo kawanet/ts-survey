@@ -4,9 +4,12 @@
 // prettier, an in-memory sink for tests, etc.).
 //
 // Mapping:
-//   semicolons.mode === "insert" → semi: true
-//   semicolons.mode === "remove" → semi: false
-//   indent.width === <number>    → tabWidth: <number>, useTabs: false
+//   semicolons.mode === "insert"            → semi: true
+//   semicolons.mode === "remove"            → semi: false
+//   indent.width === <number>               → tabWidth: <number>, useTabs: false
+//   memberSeparators.separator === "semi"   → semi: true   (semicolons 未指定時)
+//   memberSeparators.separator === "comma"  → semi: false, trailingComma: "all"
+//   memberSeparators.separator === "none"   → semi: false, trailingComma: "none"
 // Reports that didn't recommend anything contribute no fields, so an
 // empty TsSurveyReport renders as `{}`.
 
@@ -24,6 +27,23 @@ function buildPrettierOptions(report: TsSurveyReport): PrettierOptions {
     if (typeof report.indent?.width === "number") {
         opts.tabWidth = report.indent.width
         opts.useTabs = false
+    }
+    // member-separators マッピング:
+    // - semi は statement と member の両方を支配するので、まず semicolons
+    //   レポート (= 統計母数が大きい側) の値を優先採用。それが未確定のときだけ
+    //   member-separators から導出する。
+    // - trailingComma は semi が false 確定のときだけ意味を持つ
+    //   (Prettier は semi:true で member を `;` で区切るため)。
+    // - semi:true × member=none/comma のような矛盾配置では trailingComma を
+    //   出さない: semi 側を真実とみなし、矛盾するシグナルは黙って捨てる。
+    const ms = report.memberSeparators?.separator
+    if (opts.semi === undefined) {
+        if (ms === "semi") opts.semi = true
+        else if (ms === "comma" || ms === "none") opts.semi = false
+    }
+    if (opts.semi === false) {
+        if (ms === "comma") opts.trailingComma = "all"
+        else if (ms === "none") opts.trailingComma = "none"
     }
     return opts
 }

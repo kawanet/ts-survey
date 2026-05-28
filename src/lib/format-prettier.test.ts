@@ -43,6 +43,38 @@ describe("writePrettierConfig", () => {
         const out = capture({semicolons: {mode: "remove"}})
         assert.match(out, /\n {4}"semi":/)
     })
+
+    it("maps memberSeparators.separator=semi → semi: true (when semicolons is silent)", () => {
+        const json = JSON.parse(capture({memberSeparators: {separator: "semi"}}))
+        assert.equal(json.semi, true)
+        // semi:true なら member は `;` で区切られるので trailingComma は不要。
+        assert.equal(json.trailingComma, undefined)
+    })
+
+    it("maps memberSeparators.separator=comma → semi: false + trailingComma: 'all'", () => {
+        const json = JSON.parse(capture({memberSeparators: {separator: "comma"}}))
+        assert.equal(json.semi, false)
+        assert.equal(json.trailingComma, "all")
+    })
+
+    it("maps memberSeparators.separator=none → semi: false + trailingComma: 'none'", () => {
+        const json = JSON.parse(capture({memberSeparators: {separator: "none"}}))
+        assert.equal(json.semi, false)
+        assert.equal(json.trailingComma, "none")
+    })
+
+    it("combines semicolons=remove with member=none into semi:false + trailingComma:'none'", () => {
+        const json = JSON.parse(capture({semicolons: {mode: "remove"}, memberSeparators: {separator: "none"}}))
+        assert.equal(json.semi, false)
+        assert.equal(json.trailingComma, "none")
+    })
+
+    it("lets semicolons win the semi flag when the two reports disagree", () => {
+        // semicolons:insert + member=none は矛盾。semi:true を尊重し、trailingComma は出さない。
+        const json = JSON.parse(capture({semicolons: {mode: "insert"}, memberSeparators: {separator: "none"}}))
+        assert.equal(json.semi, true)
+        assert.equal(json.trailingComma, undefined)
+    })
 })
 
 describe("writePrettierMarkdown", () => {
