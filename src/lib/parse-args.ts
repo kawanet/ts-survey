@@ -4,7 +4,7 @@
 
 import path from "node:path"
 
-import {reportNames as knownReportNames} from "../report/report-names.ts"
+import {applyReportNames, reportNames as knownReportNames} from "../report/report-names.ts"
 
 // `newLine` is narrowed to lf|crlf because LS cannot emit CR-only.
 export interface ApplyOverrides {
@@ -158,10 +158,11 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     }
 
     // Survey baseline gates only the recommendation/.prettierrc summary
-    // blocks in cli.ts. Whenever --report is absent we still feed every
-    // registered report — runApply and --format both consume the full set.
+    // blocks in cli.ts. When --report is absent the default depends on
+    // --apply: apply mode runs the recommendation-bearing reports only;
+    // every other mode also pulls in the extras (Markdown-only reports).
     const surveyDefault = !apply && !hasReport && !hasFormat
-    const effectiveReports = hasReport ? requestedReports : [...knownReportNames]
+    const effectiveReports = hasReport ? requestedReports : apply ? [...applyReportNames] : [...knownReportNames]
 
     const absTsconfig = resolveTsconfigPath(tsconfigPath ?? ".")
 

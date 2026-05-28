@@ -1,20 +1,32 @@
-// Runtime list of report-name strings, isolated from the dispatcher in
-// run-reports.ts. Splitting it out lets parse-args / usage / external
-// consumers reach the list without dragging in every report module
-// (and through them, ts-morph) — the only sibling import is a type, so
-// this file has zero runtime cost.
+// Two registries that compose into the full report set:
+//   - applyReportNames: the recommendation-bearing reports whose values
+//     flow into `runApply`. These run in every mode.
+//   - extraReportNames: Markdown-only reports added on top of the apply
+//     set when the user did NOT pin individual --report names AND --apply
+//     is not active. They contribute nothing to the recommendation slot
+//     and can perturb ts-morph's LS state (findReferencesAsNodes triggers
+//     a StraightReplacementNodeHandler mismatch in subsequent formatText
+//     calls), so the apply path skips them.
+//
+// Display / concat order is extras-first (matches the survey-default
+// Markdown ordering before the split).
 
 import type {TsSurveyReportName} from "@kawanet/ts-survey"
 
-// `as const` keeps the literal tuple at the type level so the union is
-// still inferrable here, while the annotation pins the array element
-// type to the published TsSurveyReportName union — a typo on either
-// side fails tsc at this assignment.
-export const reportNames: readonly TsSurveyReportName[] = [
-    "unused-exports",
+export const applyReportNames: readonly TsSurveyReportName[] = [
     "semicolons",
     "indent",
     "member-separators",
     "new-line",
     "bracket-spacing",
+] as const
+
+export const extraReportNames: readonly TsSurveyReportName[] = [
+    "unused-exports",
+] as const
+
+// Full registry used for --report name validation and --help listing.
+export const reportNames: readonly TsSurveyReportName[] = [
+    ...extraReportNames,
+    ...applyReportNames,
 ] as const
