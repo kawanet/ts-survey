@@ -13,10 +13,11 @@
 // report runs. The tsconfig path defaults to ./tsconfig.json (i.e.
 // equivalent to `-p .`).
 //
-// Project path resolution mirrors `tsc`: `-p` / `--project` takes
-// either a `.json` file or a directory. A non-`.json` value is treated
-// as a directory and `/tsconfig.json` is appended. A bare positional
-// path is still accepted as a legacy shortcut.
+// Project path resolution mirrors `tsc -p`: the value is either a
+// `.json` file or a directory containing one. A non-`.json` value is
+// treated as a directory and `/tsconfig.json` is appended. There is
+// no bare-positional shortcut — every non-flag word is rejected so a
+// stray argument doesn't get silently misread as a tsconfig path.
 //
 // Return value semantics (parseArgs never calls process.exit):
 //   - ParsedArgs       — normal parse, ready to dispatch
@@ -130,13 +131,14 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
                 return undefined
             }
             tsconfigPath = v
-        } else if (a.startsWith("--")) {
+        } else if (a.startsWith("-")) {
             console.error(`unknown option: ${a}`)
             return undefined
-        } else if (!tsconfigPath) {
-            tsconfigPath = a
         } else {
-            console.error(`extra argument: ${a}`)
+            // The tsconfig path goes through -p / --project; bare words
+            // are rejected outright so a misspelt flag or stray arg can't
+            // silently override the project path.
+            console.error(`unexpected argument: ${a} (use -p / --project to set the tsconfig path)`)
             return undefined
         }
     }
