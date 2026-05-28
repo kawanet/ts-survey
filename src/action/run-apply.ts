@@ -35,10 +35,15 @@ export const runApply: typeof declared.runApply = async (project, opts) => {
         }
 
         // LS `newLineCharacter` only governs inserted text; existing
-        // terminators are normalized here.
+        // terminators are normalized here. Push the result back into the
+        // SourceFile so in-memory state matches what gets written.
         let after = sf.getFullText()
         if (resolved.newLineNormalize !== undefined) {
-            after = normalizeNewLines(after, resolved.newLineNormalize)
+            const normalized = normalizeNewLines(after, resolved.newLineNormalize)
+            if (normalized !== after) {
+                sf.replaceWithText(normalized)
+                after = normalized
+            }
         }
 
         if (before === after) continue

@@ -157,9 +157,11 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         return undefined
     }
 
-    // Survey baseline: nothing specified → run every registered report.
+    // Survey baseline gates only the recommendation/.prettierrc summary
+    // blocks in cli.ts. Whenever --report is absent we still feed every
+    // registered report — runApply and --format both consume the full set.
     const surveyDefault = !apply && !hasReport && !hasFormat
-    const effectiveReports = surveyDefault ? [...knownReportNames] : requestedReports
+    const effectiveReports = hasReport ? requestedReports : [...knownReportNames]
 
     const absTsconfig = resolveTsconfigPath(tsconfigPath ?? ".")
 

@@ -17,12 +17,14 @@ function quiet<T>(fn: () => T): T {
 }
 
 describe("parseArgs", () => {
-    it("recognises --apply as a write-mode trigger", () => {
+    it("recognises --apply as a write-mode trigger and feeds every registered report", () => {
         const r = parseArgs(["--apply", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
         assert.equal(r.apply, true)
         assert.deepEqual(r.applyOverrides, {})
-        assert.deepEqual(r.reportNames, [])
+        // --apply consumes the full recommendation set; every report runs.
+        assert.ok(r.reportNames.includes("unused-exports"))
+        assert.ok(r.reportNames.includes("semicolons"))
     })
 
     it("accepts comma-separated --report names with de-duplication", () => {
@@ -103,11 +105,12 @@ describe("parseArgs", () => {
         assert.equal(r.apply, false)
     })
 
-    it("does not auto-populate reports when --apply is specified", () => {
+    it("clears surveyDefault under --apply but still runs every report", () => {
         const r = parseArgs(["--apply"])
         assert.ok(r && !("help" in r))
-        assert.deepEqual(r.reportNames, [])
+        // surveyDefault gates the recommendation Markdown blocks only.
         assert.equal(r.surveyDefault, false)
+        assert.ok(r.reportNames.includes("unused-exports"))
     })
 
     it("treats explicit --report or --format as opting out of the survey-default flag", () => {
