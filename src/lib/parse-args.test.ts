@@ -107,4 +107,9 @@ describe("parseArgs", () => {
         const r = quiet(() => parseArgs(["--organize-imports", "--report", "unused-exports", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
+
+    it("returns undefined when action and --format are mixed", () => {
+        const r = quiet(() => parseArgs(["--organize-imports", "--format", "prettier", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
 })

@@ -5,8 +5,8 @@
 //   action (write): --organize-imports / --remove-semicolons / --insert-semicolons
 //   report (read) : --report <names>
 // Multiple actions can run in one invocation. Actions are exclusive with
-// --report (write vs read). --remove-semicolons and --insert-semicolons
-// are mutually exclusive.
+// --report / --format (write vs read). --remove-semicolons and
+// --insert-semicolons are mutually exclusive.
 //
 // Defaults reflect the "survey" in the package name: when the user
 // supplies neither an action nor an explicit --report, every known
@@ -132,7 +132,11 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     const hasAction = organizeImports || removeSemicolons || insertSemicolons || indentWidth !== null
     const hasReport = requestedReports.length > 0
     if (hasAction && hasReport) {
-        console.error("action flags (--organize-imports / --remove-semicolons / --insert-semicolons) cannot be combined with --report")
+        console.error("action flags (--organize-imports / --indent / --remove-semicolons / --insert-semicolons) cannot be combined with --report")
+        return undefined
+    }
+    if (hasAction && format !== null) {
+        console.error("action flags (--organize-imports / --indent / --remove-semicolons / --insert-semicolons) cannot be combined with --format")
         return undefined
     }
 
