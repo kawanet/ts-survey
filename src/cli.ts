@@ -10,8 +10,8 @@
 // leading whitespace once that structure is final; the semicolons pass
 // only touches trailing characters and stays last.
 
+import {selectFormat} from "./format/run-format.ts"
 import {initProject, runIndent, runOrganizeImports, runReports, runSemicolons} from "./index.ts"
-import {writePrettierConfig} from "./lib/format-prettier.ts"
 import {parseArgs} from "./lib/parse-args.ts"
 import {usage} from "./lib/usage.ts"
 
@@ -51,12 +51,12 @@ try {
     }
     // When no action was specified, parseArgs fills reportNames with every
     // registered report (the survey default), so this call is a no-op only
-    // when the user picked actions explicitly. `--format prettier` swaps
-    // the Markdown stream for a sink and emits a JSON config below instead.
-    const formatPrettier = opts.format === "prettier"
-    const reportStream = formatPrettier ? {write: () => {}} : process.stdout
-    const report = await runReports(project, {...fileOpts, reportNames: opts.reportNames, stream: reportStream})
-    if (formatPrettier) writePrettierConfig(report, process.stdout)
+    // when the user picked actions explicitly. selectFormat owns the
+    // per-format stream swap and post-processing, so cli.ts no longer
+    // hard-codes any specific format name.
+    const format = selectFormat(opts.format, process.stdout)
+    const report = await runReports(project, {...fileOpts, reportNames: opts.reportNames, stream: format.reportStream})
+    format.finalize(report)
 } catch (e) {
     console.error(e instanceof Error ? e.message : String(e))
     process.exit(1)

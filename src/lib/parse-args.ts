@@ -28,7 +28,7 @@ export interface ParsedArgs {
     insertSemicolons: boolean
     indentWidth: number | null
     reportNames: string[]
-    format: "prettier" | null
+    format: string | null
     tsconfigPath: string
     dryRun: boolean
     absIncludes: string[]
@@ -48,7 +48,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     let removeSemicolons = false
     let insertSemicolons = false
     let indentWidth: number | null = null
-    let format: "prettier" | null = null
+    let format: string | null = null
     let tsconfigPath: string | null = null
     let dryRun = false
     const includeGlobs: string[] = []
@@ -95,13 +95,11 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         } else if (a === "--format") {
             const v = argv[++i]
             if (!v || v.startsWith("-")) {
-                console.error("--format requires a value (currently: prettier)")
+                console.error("--format requires a value (e.g. --format prettier)")
                 return undefined
             }
-            if (v !== "prettier") {
-                console.error(`--format expects 'prettier'; got: ${v}`)
-                return undefined
-            }
+            // Whether the name is known is decided by selectFormat later
+            // (mirroring how --report names are validated by runReports).
             format = v
         } else if (a === "--include") {
             const v = takeGlobValue(argv, ++i, "--include")

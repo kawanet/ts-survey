@@ -43,6 +43,12 @@ describe("parseArgs", () => {
         assert.deepEqual(r.reportNames, ["typo-name"])
     })
 
+    it("passes unknown format names through without rejecting (selectFormat validates)", () => {
+        const r = parseArgs(["--format", "typo-format", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.format, "typo-format")
+    })
+
     it("resolves include/exclude globs against the tsconfig directory", () => {
         const r = parseArgs(["--organize-imports", SAMPLE_TSCONFIG, "--include", "src/**", "--exclude", "**/*.cli.ts"])
         assert.ok(r && !("help" in r))

@@ -1,8 +1,9 @@
 // CLI help text. Returned as a string so the caller (cli.ts) can decide
 // whether to write it to stdout (--help) or stderr (after an argv error).
-// `reportNames` is pulled from the report registry so help stays in sync
-// with whatever reports are wired up.
+// `reportNames` / `formatNames` are pulled from their respective routers
+// so help stays in sync with whatever names are wired up.
 
+import {formatNames} from "../format/run-format.ts"
 import {reportNames} from "../report/run-reports.ts"
 
 export function usage(): string {
@@ -19,7 +20,8 @@ export function usage(): string {
         "Reports (read; exclusive with actions):",
         "  --report <names>            Emit Markdown reports (comma-separated or repeat)",
         `                              Known reports: ${reportNames.join(", ")}`,
-        "  --format prettier           Suppress Markdown and emit a .prettierrc-style JSON instead",
+        "  --format <name>             Suppress Markdown and emit the named format instead",
+        `                              Known formats: ${formatNames.join(", ")}`,
         "",
         "File scope (applies to both):",
         "  --include <glob>            Restrict to files matching the glob",
