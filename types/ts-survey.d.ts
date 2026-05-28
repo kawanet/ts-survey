@@ -4,7 +4,7 @@
 
 import type {Project} from "ts-morph"
 
-export {} // external module indicator
+export {}; // external module indicator
 
 // Internal sink contract used by report writers. Consumers never construct
 // or name this directly; they pass `process.stdout` or any object with a
