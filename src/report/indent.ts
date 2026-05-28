@@ -7,11 +7,10 @@
 // map (see lib/detect-indent) so callers can introspect the distribution;
 // the report just picks the per-file mode out of that map.
 
+import type {RunIndentOpts} from "@kawanet/ts-survey"
 import type {Project} from "ts-morph"
 
-import type {RunIndentOpts} from "../action/indent.ts"
 import {detectIndent, type IndentCounts, type IndentWidth, primaryIndentWidth} from "../lib/detect-indent.ts"
-import {writeRecommendation} from "../lib/recommendation.ts"
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import type {ReportOpts} from "../lib/types.ts"
 
@@ -83,15 +82,11 @@ export async function runReportIndent(project: Project, {stream, absIncludes, ab
     }
     stream.write(`| total | ${totalLines} | ${perFile.length} | |\n`)
     stream.write("\n")
-    if (recommendWidth !== undefined) {
-        const flag = recommendWidth === "tab" ? "--indent tab" : `--indent ${recommendWidth}`
-        writeRecommendation(stream, flag)
-        stream.write("\n")
-    }
     console.error(`report indent: ${perFile.length} files counted / ${sourceFiles.length} files total`)
-    // Only numeric widths translate to a RunIndentOpts.width. A "tab"
-    // recommendation is meaningful in the table but has no action mapping
-    // today (the --indent action takes a positive integer), so we leave
-    // the return slot empty in that case.
+    // The recommendation is rendered in the `## recommendation` section
+    // at the end of the Markdown survey, so all we return is the action
+    // params (RunIndentOpts) shape. A "tab" majority has no numeric
+    // mapping under the current `--indent N` action, so it returns
+    // empty and the `## recommendation` block simply omits it.
     return typeof recommendWidth === "number" ? {width: recommendWidth} : {}
 }

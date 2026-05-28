@@ -11,10 +11,10 @@
 // `semi` is the first-level control; `trailingComma` only matters when
 // `semi: false`.
 
-import {Node} from "ts-morph"
+import type {RunMemberSeparatorsOpts} from "@kawanet/ts-survey"
 import type {ClassMemberTypes, Project, TypeElementTypes} from "ts-morph"
+import {Node} from "ts-morph"
 
-import {writeRecommendation} from "../lib/recommendation.ts"
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import type {ReportOpts} from "../lib/types.ts"
 
@@ -30,7 +30,10 @@ const SEP_LABEL: Record<Separator, string> = {
     ";": "`;`",
 }
 
-const SEP_FLAG_VALUE: Record<Separator, string> = {
+// Maps internal Separator symbols to the CLI vocabulary used by
+// `--member-separator <value>`. RunMemberSeparatorsOpts.separator also
+// uses these strings as its value space.
+const SEP_FLAG_VALUE: Record<Separator, RunMemberSeparatorsOpts["separator"]> = {
     none: "none",
     ",": "comma",
     ";": "semi",
@@ -38,7 +41,7 @@ const SEP_FLAG_VALUE: Record<Separator, string> = {
 
 type Bucket = {lines: number; files: number; topPath: string; topLines: number}
 
-export async function runReportMemberSeparators(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<void> {
+export async function runReportMemberSeparators(project: Project, {stream, absIncludes, absExcludes}: ReportOpts): Promise<Partial<RunMemberSeparatorsOpts>> {
     const sourceFiles = selectSourceFiles(project, {absIncludes, absExcludes}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     type PerFile = {path: string; counts: Map<Separator, number>; primary: Separator}
@@ -100,11 +103,11 @@ export async function runReportMemberSeparators(project: Project, {stream, absIn
     }
     stream.write(`| total | ${totalLines} | ${perFile.length} | |\n`)
     stream.write("\n")
-    if (recommendSep !== undefined) {
-        writeRecommendation(stream, `--member-separator ${SEP_FLAG_VALUE[recommendSep]}`)
-        stream.write("\n")
-    }
     console.error(`report member-separators: ${perFile.length} files counted / ${sourceFiles.length} files total`)
+    // The recommendation is rendered in the trailing `## recommendation`
+    // section, so all we return is the action params shape. An ambiguous
+    // file-count majority (no strict winner) returns an empty partial.
+    return recommendSep !== undefined ? {separator: SEP_FLAG_VALUE[recommendSep]} : {}
 }
 
 // Reads the member AST and returns the trailing separator. Only members with

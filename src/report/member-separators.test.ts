@@ -39,9 +39,12 @@ describe("runReportMemberSeparators (sample/members-mixed)", () => {
         project.createSourceFile("b.ts", "export interface B {\n    a: number;\n    b: number;\n}\n")
         project.createSourceFile("c.ts", "export interface C {\n    a: number,\n}\n")
         const lines: string[] = []
-        await runReportMemberSeparators(project, {stream: {write: (l) => lines.push(l)}, absIncludes: [], absExcludes: []})
+        const ret = await runReportMemberSeparators(project, {stream: {write: (l) => lines.push(l)}, absIncludes: [], absExcludes: []})
         const out = lines.join("")
-        assert.match(out, /recommendation:\n {4}--member-separator semi\n/)
+        // Recommendation is no longer inlined in the Markdown; it comes back
+        // as the return value (RunMemberSeparatorsOpts.separator).
+        assert.equal(/^recommendation:/m.test(out), false)
+        assert.deepEqual(ret, {separator: "semi"})
     })
 
     it("skips method bodies (members ending in `}`) so they do not inflate the `\\n` bucket", async () => {

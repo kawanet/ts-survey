@@ -8,7 +8,7 @@ import {reportNames} from "../report/run-reports.ts"
 
 export function usage(): string {
     return [
-        "Usage: ts-survey <action(s)|--report> <tsconfig.json> [options]",
+        "Usage: ts-survey <action(s)|--report> [-p tsconfig.json] [options]",
         "",
         "Actions (write; multiple can be combined, fixed execution order):",
         "  --organize-imports          Apply the Language Service organizeImports",
@@ -22,6 +22,10 @@ export function usage(): string {
         `                              Known reports: ${reportNames.join(", ")}`,
         "  --format <name>             Suppress Markdown and emit the named format instead",
         `                              Known formats: ${formatNames.join(", ")}`,
+        "",
+        "Project (mirrors `tsc -p`):",
+        "  -p, --project <path>        Path to a tsconfig.json or a directory",
+        "                              that contains one. Defaults to `-p .`.",
         "",
         "File scope (applies to both):",
         "  --include <glob>            Restrict to files matching the glob",

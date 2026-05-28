@@ -18,7 +18,7 @@ function quiet<T>(fn: () => T): T {
 
 describe("parseArgs", () => {
     it("recognises --organize-imports as a write action", () => {
-        const r = parseArgs(["--organize-imports", SAMPLE_TSCONFIG])
+        const r = parseArgs(["--organize-imports", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
         assert.equal(r.organizeImports, true)
         assert.equal(r.removeSemicolons, false)
@@ -26,31 +26,31 @@ describe("parseArgs", () => {
     })
 
     it("accepts comma-separated --report names with de-duplication", () => {
-        const r = parseArgs(["--report", "unused-exports,semicolons,unused-exports", SAMPLE_TSCONFIG])
+        const r = parseArgs(["--report", "unused-exports,semicolons,unused-exports", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
         assert.deepEqual(r.reportNames, ["unused-exports", "semicolons"])
     })
 
     it("accepts repeated --report flags", () => {
-        const r = parseArgs(["--report", "unused-exports", "--report", "semicolons", SAMPLE_TSCONFIG])
+        const r = parseArgs(["--report", "unused-exports", "--report", "semicolons", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
         assert.deepEqual(r.reportNames, ["unused-exports", "semicolons"])
     })
 
     it("passes unknown report names through without rejecting (runReports validates)", () => {
-        const r = parseArgs(["--report", "typo-name", SAMPLE_TSCONFIG])
+        const r = parseArgs(["--report", "typo-name", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
         assert.deepEqual(r.reportNames, ["typo-name"])
     })
 
     it("passes unknown format names through without rejecting (selectFormat validates)", () => {
-        const r = parseArgs(["--format", "typo-format", SAMPLE_TSCONFIG])
+        const r = parseArgs(["--format", "typo-format", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
         assert.equal(r.format, "typo-format")
     })
 
     it("resolves include/exclude globs against the tsconfig directory", () => {
-        const r = parseArgs(["--organize-imports", SAMPLE_TSCONFIG, "--include", "src/**", "--exclude", "**/*.cli.ts"])
+        const r = parseArgs(["--organize-imports", "-p", SAMPLE_TSCONFIG, "--include", "src/**", "--exclude", "**/*.cli.ts"])
         assert.ok(r && !("help" in r))
         const dir = path.dirname(SAMPLE_TSCONFIG)
         assert.equal(r.absIncludes[0], path.join(dir, "src/**"))
@@ -59,6 +59,31 @@ describe("parseArgs", () => {
 
     it("defaults tsconfigPath to ./tsconfig.json when none is given", () => {
         const r = parseArgs(["--organize-imports"])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
+    })
+
+    it("accepts -p with a tsconfig.json path", () => {
+        const r = parseArgs(["-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
+    })
+
+    it("accepts --project as the long form of -p", () => {
+        const r = parseArgs(["--project", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
+    })
+
+    it("treats a non-.json -p value as a directory and appends tsconfig.json", () => {
+        const dir = path.dirname(SAMPLE_TSCONFIG)
+        const r = parseArgs(["-p", dir])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.tsconfigPath, path.join(dir, "tsconfig.json"))
+    })
+
+    it("treats `-p .` the same as omitting the path", () => {
+        const r = parseArgs(["-p", "."])
         assert.ok(r && !("help" in r))
         assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
     })
@@ -85,31 +110,36 @@ describe("parseArgs", () => {
     })
 
     it("treats explicit --report or --format as opting out of the survey-default flag", () => {
-        const r1 = parseArgs(["--report", "unused-exports", SAMPLE_TSCONFIG])
+        const r1 = parseArgs(["--report", "unused-exports", "-p", SAMPLE_TSCONFIG])
         assert.ok(r1 && !("help" in r1))
         assert.equal(r1.surveyDefault, false)
-        const r2 = parseArgs(["--format", "prettier", SAMPLE_TSCONFIG])
+        const r2 = parseArgs(["--format", "prettier", "-p", SAMPLE_TSCONFIG])
         assert.ok(r2 && !("help" in r2))
         assert.equal(r2.surveyDefault, false)
     })
 
     it("returns undefined on an unknown option", () => {
-        const r = quiet(() => parseArgs(["--definitely-not-a-flag", SAMPLE_TSCONFIG]))
+        const r = quiet(() => parseArgs(["--definitely-not-a-flag", "-p", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
+
+    it("rejects a bare positional argument (use -p instead)", () => {
+        const r = quiet(() => parseArgs([SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
 
     it("returns undefined when both --remove-semicolons and --insert-semicolons are set", () => {
-        const r = quiet(() => parseArgs(["--remove-semicolons", "--insert-semicolons", SAMPLE_TSCONFIG]))
+        const r = quiet(() => parseArgs(["--remove-semicolons", "--insert-semicolons", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
 
     it("returns undefined when action and --report are mixed", () => {
-        const r = quiet(() => parseArgs(["--organize-imports", "--report", "unused-exports", SAMPLE_TSCONFIG]))
+        const r = quiet(() => parseArgs(["--organize-imports", "--report", "unused-exports", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
 
     it("returns undefined when action and --format are mixed", () => {
-        const r = quiet(() => parseArgs(["--organize-imports", "--format", "prettier", SAMPLE_TSCONFIG]))
+        const r = quiet(() => parseArgs(["--organize-imports", "--format", "prettier", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
 })
