@@ -19,6 +19,7 @@ export function usage(): string {
         "Reports (read; exclusive with actions):",
         "  --report <names>            Emit Markdown reports (comma-separated or repeat)",
         `                              Known reports: ${reportNames.join(", ")}`,
+        "  --format prettier           Suppress Markdown and emit a .prettierrc-style JSON instead",
         "",
         "File scope (applies to both):",
         "  --include <glob>            Restrict to files matching the glob",

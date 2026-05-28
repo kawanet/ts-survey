@@ -28,6 +28,7 @@ export interface ParsedArgs {
     insertSemicolons: boolean
     indentWidth: number | null
     reportNames: string[]
+    format: "prettier" | null
     tsconfigPath: string
     dryRun: boolean
     absIncludes: string[]
@@ -47,6 +48,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     let removeSemicolons = false
     let insertSemicolons = false
     let indentWidth: number | null = null
+    let format: "prettier" | null = null
     let tsconfigPath: string | null = null
     let dryRun = false
     const includeGlobs: string[] = []
@@ -90,6 +92,17 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
             }
         } else if (a === "--dry-run") {
             dryRun = true
+        } else if (a === "--format") {
+            const v = argv[++i]
+            if (!v || v.startsWith("-")) {
+                console.error("--format requires a value (currently: prettier)")
+                return undefined
+            }
+            if (v !== "prettier") {
+                console.error(`--format expects 'prettier'; got: ${v}`)
+                return undefined
+            }
+            format = v
         } else if (a === "--include") {
             const v = takeGlobValue(argv, ++i, "--include")
             if (v === undefined) return undefined
@@ -142,6 +155,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         insertSemicolons,
         indentWidth,
         reportNames: effectiveReports,
+        format,
         tsconfigPath: absTsconfig,
         dryRun,
         absIncludes,
