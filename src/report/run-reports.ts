@@ -7,6 +7,7 @@ import type {Project} from "ts-morph"
 
 import type {Writer} from "../lib/writable.ts"
 import {runReportIndent} from "./indent.ts"
+import {runReportMemberSeparators} from "./member-separators.ts"
 import {runReportSemicolons} from "./semicolons.ts"
 import type {ReportOpts} from "./unused-exports.ts"
 import {runReportUnusedExports} from "./unused-exports.ts"
@@ -15,6 +16,7 @@ const REPORTS: Record<string, (project: Project, opts: ReportOpts) => Promise<vo
     "unused-exports": runReportUnusedExports,
     semicolons: runReportSemicolons,
     indent: runReportIndent,
+    "member-separators": runReportMemberSeparators,
 }
 
 export const reportNames = Object.keys(REPORTS)

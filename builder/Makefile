@@ -15,7 +15,7 @@ NAMED_EXPORTS := initProject runOrganizeImports runIndent runSemicolons runRepor
 # Bundle should contain only this package's own src/ — ts-morph and minimatch
 # are externalized. A noticeably larger output means an accidental bundling
 # of a transitive dep; fail the build so it cannot slip in.
-MAX_BYTES := 30000
+MAX_BYTES := 35000
 
 ALL := $(MJS_DST)
 
