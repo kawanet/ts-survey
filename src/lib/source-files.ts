@@ -20,8 +20,9 @@ export function selectSourceFiles(project: Project, {absIncludes, absExcludes}: 
     return files
 }
 
-// Shortens display paths by removing the leading `../` chain that
-// path.relative leaves when the source lives outside the current cwd.
+// Shortens only long multi-level escapes from path.relative(). A single `../`
+// can still be useful context, but repeated escapes are usually just noise in
+// batch reports that run from a distant cwd.
 export function displayPath(absPath: string): string {
-    return path.relative(process.cwd(), absPath).replace(/^.*\/\.\.\//, "")
+    return path.relative(process.cwd(), absPath).replace(/^(\.\.[/\\]){2,}/, "")
 }

@@ -24,4 +24,31 @@ describe("runReportSemicolons (sample/semicolons-mixed)", () => {
         // Empty file should not appear anywhere.
         assert.equal(/empty\.ts/.test(out), false)
     })
+
+    it("uses integer bucket boundaries for exact 50% and near-boundary tails", async () => {
+        const project = new Project({useInMemoryFileSystem: true})
+        project.createSourceFile(
+            "/sample/tsconfig.json",
+            JSON.stringify({compilerOptions: {}, include: ["*.ts"]}),
+        )
+        project.createSourceFile("/sample/ten-percent.ts", statements(1, 10))
+        project.createSourceFile("/sample/exact-half.ts", statements(1, 2))
+        project.createSourceFile("/sample/ninety-percent.ts", statements(9, 10))
+        const lines: string[] = []
+
+        await runReportSemicolons(project, {
+            stream: {write: (l) => lines.push(l)},
+            absIncludes: ["/sample/*.ts"],
+            absExcludes: [],
+        })
+
+        const out = lines.join("")
+        assert.match(out, /\| 1-10% \| 1 \| /)
+        assert.match(out, /\| 50% \| 1 \| /)
+        assert.match(out, /\| 90-99% \| 1 \| /)
+    })
 })
+
+function statements(withSemi: number, total: number): string {
+    return Array.from({length: total}, (_, i) => `const v${i} = ${i}${i < withSemi ? ";" : ""}`).join("\n")
+}
