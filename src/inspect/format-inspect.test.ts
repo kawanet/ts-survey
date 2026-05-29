@@ -35,4 +35,25 @@ describe("writeInspectFile", () => {
         assert.match(out, /^## src\/a\.ts\n/)
         assert.equal(/### exports/.test(out), false)
     })
+
+    it("emits the importers table with the comma-joined kinds and names", () => {
+        const out = capture({
+            file: "src/a.ts",
+            importers: [
+                {file: "src/cli.ts", kinds: ["value"], names: ["x", "y"]},
+                {file: "src/loader.ts", kinds: ["dynamic"], names: ["(dynamic)"]},
+                {file: "src/mixed.ts", kinds: ["type", "value"], names: ["type T", "x"]},
+            ],
+        })
+        assert.match(out, /^### importers$/m)
+        assert.match(out, /^\| importer \| kind \| names \|/m)
+        assert.match(out, /\| src\/cli\.ts \| value \| x, y \|/)
+        assert.match(out, /\| src\/loader\.ts \| dynamic \| \(dynamic\) \|/)
+        assert.match(out, /\| src\/mixed\.ts \| type, value \| type T, x \|/)
+    })
+
+    it("emits an `(no importers)` line when nothing imports the file", () => {
+        const out = capture({file: "src/index.ts", importers: []})
+        assert.match(out, /### importers\n\n\(no importers\)\n/)
+    })
 })
