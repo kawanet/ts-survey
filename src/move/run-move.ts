@@ -76,27 +76,30 @@ export const runMove: typeof declared.runMove = async (project, opts) => {
 // Resolve sources/dest into a concrete from→to plan. Mirrors `mv`'s rules:
 // a directory destination puts each source into it under its basename;
 // a file destination only makes sense for a single source. Conflicts
-// (duplicate dest, dest === a source) are rejected up-front.
+// (duplicate dest, dest === a source, dest overlaps an existing project
+// file that is not also being moved out) are rejected up-front so a bad
+// invocation cannot silently overwrite a project file.
 function planMoves(project: Project, sources: string[], dest: string): {from: string; to: string}[] {
     if (sources.length === 0) throw new Error("move: at least one source file is required")
 
-    const destIsDir = isDirectoryDest(dest)
+    const destIsDir = isDirectoryDest(project, dest)
     if (sources.length > 1 && !destIsDir) {
         throw new Error(`move: destination must be an existing directory when moving multiple sources; got: ${dest}`)
     }
 
-    const fromSet = new Set<string>()
+    const fromSet = new Set(sources)
     const toSet = new Set<string>()
+    const seenSources = new Set<string>()
     const plan: {from: string; to: string}[] = []
 
     for (const src of sources) {
         if (!project.getSourceFile(src)) {
             throw new Error(`move: not in the project: ${src}`)
         }
-        if (fromSet.has(src)) {
+        if (seenSources.has(src)) {
             throw new Error(`move: source listed twice: ${src}`)
         }
-        fromSet.add(src)
+        seenSources.add(src)
 
         const to = destIsDir ? path.join(dest, path.basename(src)) : dest
         if (src === to) {
@@ -105,8 +108,10 @@ function planMoves(project: Project, sources: string[], dest: string): {from: st
         if (toSet.has(to)) {
             throw new Error(`move: multiple sources map to the same destination: ${to}`)
         }
-        if (fromSet.has(to)) {
-            throw new Error(`move: destination overlaps with another source: ${to}`)
+        // Overlap with an existing project file that isn't one of the
+        // sources being moved away — would silently overwrite, so reject.
+        if (!fromSet.has(to) && project.getSourceFile(to)) {
+            throw new Error(`move: destination is an existing project file: ${to}`)
         }
         toSet.add(to)
         plan.push({from: src, to})
@@ -115,11 +120,14 @@ function planMoves(project: Project, sources: string[], dest: string): {from: st
     return plan
 }
 
-// Trailing `/` always means "directory" (UNIX convention). Otherwise look
-// at disk: an existing directory is the multi-source case; anything else
-// (existing file or not-yet-present path) is the single-source rename.
-function isDirectoryDest(dest: string): boolean {
+// Trailing `/` always means "directory" (UNIX convention). Otherwise
+// check the project's filesystem first — ts-morph's in-memory FS is
+// invisible to fs.statSync, so a public-API caller using an in-memory
+// project would otherwise see real directories misclassified as renames.
+// Fall back to the host filesystem for the common on-disk path.
+function isDirectoryDest(project: Project, dest: string): boolean {
     if (dest.endsWith("/") || dest.endsWith(path.sep)) return true
+    if (project.getFileSystem().directoryExistsSync(dest)) return true
     try {
         return fs.statSync(dest).isDirectory()
     } catch {

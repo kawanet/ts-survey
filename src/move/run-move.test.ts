@@ -93,6 +93,27 @@ describe("runMove (in-memory, dry-run)", () => {
         )
     })
 
+    it("rejects when destination is an existing project file that isn't being moved out", async () => {
+        const project = newProject()
+        project.createSourceFile("/src/a.ts", "export const x = 1\n")
+        project.createSourceFile("/src/b.ts", "export const y = 2\n")
+        await assert.rejects(
+            () => runMove(project, {sources: ["/src/a.ts"], dest: "/src/b.ts", dryRun: true}),
+            /destination is an existing project file/,
+        )
+    })
+
+    it("recognizes in-memory directories without a trailing slash (project FS, not host FS)", async () => {
+        const project = newProject()
+        // An in-memory directory exists when any source file lives under it.
+        project.createSourceFile("/src/a.ts", "export const x = 1\n")
+        project.createSourceFile("/lib/keep.ts", "export const k = 0\n")
+        // `/lib` has no trailing slash; the project's in-memory FS reports it
+        // as a directory, so we treat the move as a directory move.
+        const result = await runMove(project, {sources: ["/src/a.ts"], dest: "/lib", dryRun: true})
+        assert.deepEqual(result.moves, [{from: "/src/a.ts", to: "/lib/a.ts"}])
+    })
+
     it("reports the planned moves and the touched importer files", async () => {
         const project = newProject()
         project.createSourceFile("/src/a.ts", "export const x = 1\n")
