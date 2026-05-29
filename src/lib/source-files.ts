@@ -7,8 +7,8 @@ import type {Project, SourceFile} from "ts-morph"
 
 import type {RunReportsOpts} from "@kawanet/ts-survey"
 
-export function selectSourceFiles(project: Project, {absIncludes}: Pick<RunReportsOpts, "absIncludes">): SourceFile[] {
-    return absIncludes.length > 0 ? project.getSourceFiles(absIncludes) : project.getSourceFiles()
+export function selectSourceFiles(project: Project, {paths}: Pick<RunReportsOpts, "paths">): SourceFile[] {
+    return paths.length > 0 ? project.getSourceFiles(paths) : project.getSourceFiles()
 }
 
 // Shortens long paths by dropping everything through the last interior

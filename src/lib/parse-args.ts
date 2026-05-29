@@ -36,7 +36,7 @@ interface ParsedArgs {
     tsconfigPath: string
     dryRun: boolean
     // Positional file arguments, resolved to absolute (globs allowed).
-    absIncludes: string[]
+    paths: string[]
 }
 
 interface HelpRequested {
@@ -98,8 +98,8 @@ function parseReport(rest: string[]): ParseArgsResult | undefined {
 
     const surveyDefault = reportNames.length === 0 && output === null
     const effectiveReports = reportNames.length > 0 ? reportNames : [...knownReportNames]
-    const {absTsconfig, absIncludes} = resolvePaths(tsconfigPath, files)
-    return {command: "report", reportNames: effectiveReports, output, applyOverrides: {}, surveyDefault, tsconfigPath: absTsconfig, dryRun: false, absIncludes}
+    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
+    return {command: "report", reportNames: effectiveReports, output, applyOverrides: {}, surveyDefault, tsconfigPath: absTsconfig, dryRun: false, paths}
 }
 
 // `reformat`: a fixed set of override options plus positional files.
@@ -171,8 +171,8 @@ function parseReformat(rest: string[]): ParseArgsResult | undefined {
         }
     }
 
-    const {absTsconfig, absIncludes} = resolvePaths(tsconfigPath, files)
-    return {command: "reformat", reportNames: [...applyReportNames], output: null, applyOverrides: overrides, surveyDefault: false, tsconfigPath: absTsconfig, dryRun, absIncludes}
+    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
+    return {command: "reformat", reportNames: [...applyReportNames], output: null, applyOverrides: overrides, surveyDefault: false, tsconfigPath: absTsconfig, dryRun, paths}
 }
 
 function takeProject(args: string[], idx: number, optName: string, existing: string | null): string | undefined {
@@ -191,11 +191,11 @@ function takeProject(args: string[], idx: number, optName: string, existing: str
 // Resolve the tsconfig path and the positional files. Files are resolved
 // against the tsconfig dir (not cwd) so the target set doesn't shift with
 // the working directory — same basis the removed --include used.
-function resolvePaths(tsconfigPath: string | null, files: string[]): {absTsconfig: string; absIncludes: string[]} {
+function resolvePaths(tsconfigPath: string | null, files: string[]): {absTsconfig: string; paths: string[]} {
     const absTsconfig = resolveTsconfigPath(tsconfigPath ?? ".")
     const tsconfigDir = path.dirname(absTsconfig)
-    const absIncludes = files.map((g) => (path.isAbsolute(g) ? g : path.resolve(tsconfigDir, g)))
-    return {absTsconfig, absIncludes}
+    const paths = files.map((g) => (path.isAbsolute(g) ? g : path.resolve(tsconfigDir, g)))
+    return {absTsconfig, paths}
 }
 
 // Mirrors `tsc -p`: a non-`.json` value is treated as a directory and

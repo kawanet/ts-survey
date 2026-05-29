@@ -23,7 +23,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {indent: {width: 4}},
             }),
         )
@@ -37,7 +37,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {indent: {width: 4}},
                 indent: 2,
             }),
@@ -51,7 +51,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {semicolons: {semicolons: "on"}},
             }),
         )
@@ -64,7 +64,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {semicolons: {semicolons: "off"}},
             }),
         )
@@ -78,7 +78,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {},
             }),
         )
@@ -96,7 +96,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {},
                 organizeImports: "off",
             }),
@@ -118,7 +118,7 @@ describe("runReformat", () => {
         try {
             await runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {newLine: {newLine: "cr"}},
             })
         } finally {
@@ -135,7 +135,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {bracketSpacing: {bracketSpacing: "on"}},
             }),
         )
@@ -149,7 +149,7 @@ describe("runReformat", () => {
         await quiet(() =>
             runReformat(project, {
                 dryRun: true,
-                absIncludes: [],
+                paths: [],
                 report: {semicolons: {semicolons: "on"}},
             }),
         )

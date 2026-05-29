@@ -58,13 +58,13 @@ describe("parseArgs", () => {
     it("resolves positional file globs against the tsconfig directory", () => {
         const r = parseArgs(["report", "-p", SAMPLE_TSCONFIG, "src/**", "extra.ts"])
         assert.ok(r && !("help" in r))
-        assert.deepEqual(r.absIncludes, [path.join(SAMPLE_DIR, "src/**"), path.join(SAMPLE_DIR, "extra.ts")])
+        assert.deepEqual(r.paths, [path.join(SAMPLE_DIR, "src/**"), path.join(SAMPLE_DIR, "extra.ts")])
     })
 
     it("accepts positional files under reformat", () => {
         const r = parseArgs(["reformat", "-p", SAMPLE_TSCONFIG, "a.ts", "b.ts"])
         assert.ok(r && !("help" in r))
-        assert.deepEqual(r.absIncludes, [path.join(SAMPLE_DIR, "a.ts"), path.join(SAMPLE_DIR, "b.ts")])
+        assert.deepEqual(r.paths, [path.join(SAMPLE_DIR, "a.ts"), path.join(SAMPLE_DIR, "b.ts")])
     })
 
     it("defaults tsconfigPath to ./tsconfig.json when none is given", () => {
