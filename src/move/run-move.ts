@@ -147,10 +147,11 @@ function planMoves(project: Project, sources: string[], dest: string): {from: st
         if (toSet.has(to)) {
             throw new Error(`move: multiple sources map to the same destination: ${to}`)
         }
-        // Overlap with an existing project file that isn't one of the
-        // sources being moved away — would silently overwrite, so reject.
-        if (!fromSet.has(to) && project.getSourceFile(to)) {
-            throw new Error(`move: destination is an existing project file: ${to}`)
+        // Overlap with an existing project file OR a file on the
+        // project's filesystem that the tsconfig happens to exclude.
+        // Either would be silently overwritten by sf.save(); reject both.
+        if (!fromSet.has(to) && (project.getSourceFile(to) || project.getFileSystem().fileExistsSync(to))) {
+            throw new Error(`move: destination already exists: ${to}`)
         }
         toSet.add(to)
         plan.push({from: src, to})
@@ -174,15 +175,16 @@ function isDirectoryDest(project: Project, dest: string): boolean {
     }
 }
 
-// Walks every project source file (.d.ts excluded) and captures any
-// specifier whose target is moving — or any outgoing specifier on a moving
-// file itself, since ts-morph rewrites those too when the file relocates.
+// Walks every project source file and captures any specifier whose target
+// is moving — or any outgoing specifier on a moving file itself, since
+// ts-morph rewrites those too when the file relocates. `.d.ts` files are
+// included so an ambient declaration that imports or re-exports a moving
+// source still gets its specifier rewritten and saved.
 function snapshotSpecifiers(project: Project, movingPaths: Set<string>): SpecRecord[] {
     const records: SpecRecord[] = []
 
     for (const sf of project.getSourceFiles()) {
         const filePath = sf.getFilePath()
-        if (filePath.endsWith(".d.ts")) continue
         const isMoving = movingPaths.has(filePath)
 
         for (const decl of sf.getImportDeclarations()) {
@@ -260,9 +262,13 @@ const JS_TO_TS_SWAPS: Record<string, string[]> = {
 function dynamicTargetCandidates(absolute: string): string[] {
     const candidates = [absolute]
     const ext = extensionOf(absolute)
+    const tsFamily = [".ts", ".tsx", ".mts", ".cts"]
     if (ext === "") {
-        // No extension: every TS-family extension is a candidate.
-        for (const tsExt of [".ts", ".tsx", ".mts", ".cts"]) candidates.push(absolute + tsExt)
+        // No extension: every TS-family extension is a candidate, both as
+        // a sibling file (`./feature.ts`) and as the directory's index
+        // (`./feature/index.ts`).
+        for (const tsExt of tsFamily) candidates.push(absolute + tsExt)
+        for (const tsExt of tsFamily) candidates.push(path.join(absolute, "index" + tsExt))
     } else if (JS_TO_TS_SWAPS[ext]) {
         for (const tsExt of JS_TO_TS_SWAPS[ext]) candidates.push(withExtension(absolute, tsExt))
     }

@@ -136,8 +136,44 @@ describe("runMove (in-memory, dry-run)", () => {
         project.createSourceFile("/src/b.ts", "export const y = 2\n")
         await assert.rejects(
             () => runMove(project, {sources: ["/src/a.ts"], dest: "/src/b.ts", dryRun: true}),
-            /destination is an existing project file/,
+            /destination already exists/,
         )
+    })
+
+    it("rejects when destination is on the project FS but excluded from the tsconfig", async () => {
+        // dist/precious.ts exists on the project FS but isn't a SourceFile
+        // in the project (excluded by tsconfig). sf.save() would still
+        // overwrite it on disk, so the planner has to consult the FS too.
+        const project = newProject()
+        project.createSourceFile("/src/a.ts", "export const x = 1\n")
+        // Drop a file directly onto the in-memory FS without registering
+        // it as a project SourceFile.
+        project.getFileSystem().writeFileSync("/dist/precious.ts", "// excluded but real\n")
+        await assert.rejects(
+            () => runMove(project, {sources: ["/src/a.ts"], dest: "/dist/precious.ts", dryRun: true}),
+            /destination already exists/,
+        )
+    })
+
+    it("includes .d.ts importers in the rewrite scan", async () => {
+        const project = newProject()
+        project.createSourceFile("/src/a.ts", "export const x = 1\n")
+        const dts = project.createSourceFile("/src/ambient.d.ts", "import {x} from \"./a.ts\"\ndeclare const _: typeof x\n")
+        await runMove(project, {sources: ["/src/a.ts"], dest: "/src/sub/", dryRun: true})
+        // The .d.ts specifier was rewritten AND its `.ts` extension was restored.
+        assert.equal(dts.getFullText(), "import {x} from \"./sub/a.ts\"\ndeclare const _: typeof x\n")
+    })
+
+    it("resolves dynamic imports that target a directory's index file", async () => {
+        // `import("./feature")` resolves to ./feature/index.ts under Node-
+        // style resolution; the snapshot must capture this so the file gets
+        // saved when the index module moves.
+        const project = newProject()
+        project.createSourceFile("/src/feature/index.ts", "export const x = 1\n")
+        const b = project.createSourceFile("/src/b.ts", "const _ = import(\"./feature\")\n")
+        const result = await runMove(project, {sources: ["/src/feature/index.ts"], dest: "/src/sub/index.ts", dryRun: true})
+        // b.ts must appear in touched (so it would be saved end-to-end).
+        assert.ok(result.touched.includes(b.getFilePath()), `b.ts must be reported as touched; got: ${JSON.stringify(result.touched)}`)
     })
 
     it("recognizes in-memory directories without a trailing slash (project FS, not host FS)", async () => {
