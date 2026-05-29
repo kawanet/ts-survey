@@ -1,4 +1,4 @@
-// --report member-separators: classify each interface / class member by
+// report member-separators: classify each interface / class member by
 // its trailing punctuation (`;`, `,`, or none / newline-only), then bucket
 // files by the primary style they use. Body-bearing members (methods,
 // accessors, constructors) are skipped because the separator choice isn't
@@ -29,9 +29,8 @@ const SEP_LABEL: Record<Separator, string> = {
     ";": "`;`",
 }
 
-// Maps internal Separator symbols to the CLI vocabulary used by
-// `--member-separator <value>`. RunMemberSeparatorsOpts.separator also
-// uses these strings as its value space.
+// Maps internal Separator symbols to RunMemberSeparatorsOpts.separator's
+// value space (semi / comma / none).
 const SEP_FLAG_VALUE: Record<Separator, RunMemberSeparatorsOpts["separator"]> = {
     none: "none",
     ",": "comma",

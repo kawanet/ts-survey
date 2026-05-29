@@ -1,7 +1,7 @@
 // Renders a TsSurveyReport as the JSON body of a .prettierrc file.
 // Only the fields the prettier CLI itself understands are emitted; the
-// caller decides what stream to write to (process.stdout for --format
-// prettier, an in-memory sink for tests, etc.).
+// caller decides what stream to write to (process.stdout for
+// `report --output prettier`, an in-memory sink for tests, etc.).
 //
 // Mapping:
 //   semicolons.semicolons === "on"          → semi: true
@@ -24,7 +24,7 @@ import type {Options as PrettierOptions} from "prettier"
 type Writer = RunReportsOpts["stream"]
 
 // Collects the recommendations that fired into a PrettierOptions object.
-// Shared by the raw --format prettier output and the .prettierrc fence
+// Shared by the raw --output prettier output and the .prettierrc fence
 // embedded in the default Markdown survey.
 function buildPrettierOptions(report: TsSurveyReport): PrettierOptions {
     const opts: PrettierOptions = {}

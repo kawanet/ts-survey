@@ -1,4 +1,4 @@
-// --report new-line: count the line terminators each file uses, then
+// report new-line: count the line terminators each file uses, then
 // pick the file-count majority. Maps to FormatCodeSettings.newLineCharacter
 // and Prettier's `endOfLine`.
 

@@ -1,4 +1,4 @@
-// `--apply`: resolve report + overrides → LS formatter + organizeImports.
+// `format` command: resolve report + overrides → LS formatter + organizeImports.
 // Order is formatText → organizeImports; the same FormatCodeSettings
 // feeds both so the rebuilt import block matches the file.
 

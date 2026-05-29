@@ -4,7 +4,7 @@
 // Each report function returns the action params its recommendation
 // would drive (or an empty partial when nothing strict was found); the
 // router merges those into a single TsSurveyReport so a caller can
-// chain them into action calls (or format them with --format).
+// chain them into action calls (or render them via report --output).
 
 import type * as declared from "@kawanet/ts-survey"
 
