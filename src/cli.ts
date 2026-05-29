@@ -8,7 +8,7 @@ import type {TsSurveyReportName} from "@kawanet/ts-survey"
 
 import {selectFormat} from "./format/run-format.ts"
 import {initProject, runList, runReformat, runReports} from "./index.ts"
-import {filterListEntries, writeListTable} from "./ls/format-ls.ts"
+import {filterListEntries, writeListTable} from "./list/format-list.ts"
 import {writePrettierMarkdown} from "./lib/format-prettier.ts"
 import {writeReformatMarkdown} from "./lib/format-ts-survey.ts"
 import {parseArgs} from "./lib/parse-args.ts"
