@@ -5,6 +5,7 @@ import {Project} from "ts-morph"
 import {runReportIndent} from "./indent.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/indents-mixed/tsconfig.json")
+const TAB_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/tab-indent/tsconfig.json")
 
 describe("runReportIndent (sample/indents-mixed)", () => {
     it("groups files by primary leading width and returns the file-count majority", async () => {
@@ -63,6 +64,21 @@ describe("runReportIndent (sample/indents-mixed)", () => {
             absIncludes: ["/sample/*.ts"],
             absExcludes: [],
         })
+        assert.deepEqual(ret, {})
+    })
+})
+
+describe("runReportIndent (sample/tab-indent)", () => {
+    it("returns an empty partial when all files use tab indentation", async () => {
+        // Tab is not representable as --indent N, so the recommendation
+        // object stays empty; --format ts-survey emits `ts-survey --apply`
+        // with no --indent flag.
+        const project = new Project({tsConfigFilePath: TAB_TSCONFIG})
+        const lines: string[] = []
+        const ret = await runReportIndent(project, {stream: {write: (l) => lines.push(l)}, absIncludes: [], absExcludes: []})
+
+        const out = lines.join("")
+        assert.match(out, /\| tab \| \d+ \| 3 \| /)
         assert.deepEqual(ret, {})
     })
 })
