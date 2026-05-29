@@ -298,4 +298,47 @@ describe("parseArgs", () => {
         const r = quiet(() => parseArgs(["move", "only-one.ts", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
+
+    // Global options (-p / --project, --dry-run) may sit on either side of
+    // the subcommand; the three duplicate shapes behave identically.
+    it("accepts -p before the subcommand (global, left side)", () => {
+        const r = parseArgs(["-p", SAMPLE_TSCONFIG, "report"])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.command, "report")
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
+    })
+
+    it("accepts --project before the subcommand for any command", () => {
+        const r = parseArgs(["--project", SAMPLE_TSCONFIG, "reformat", "--semicolons", "off"])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.command, "reformat")
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
+        assert.equal(r.applyOverrides.semicolons, "off")
+    })
+
+    it("accepts --dry-run before the subcommand (left side)", () => {
+        const r = parseArgs(["--dry-run", "reformat", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.command, "reformat")
+        assert.equal(r.dryRun, true)
+    })
+
+    it("rejects --dry-run for a read command, wherever it sits", () => {
+        assert.equal(quiet(() => parseArgs(["report", "--dry-run", "-p", SAMPLE_TSCONFIG])), undefined)
+        assert.equal(quiet(() => parseArgs(["--dry-run", "report", "-p", SAMPLE_TSCONFIG])), undefined)
+    })
+
+    it("rejects -p duplicated across either side, like the right-side duplicate", () => {
+        // left+right
+        assert.equal(quiet(() => parseArgs(["-p", SAMPLE_TSCONFIG, "report", "-p", SAMPLE_TSCONFIG])), undefined)
+        // left+left
+        assert.equal(quiet(() => parseArgs(["-p", SAMPLE_TSCONFIG, "-p", SAMPLE_TSCONFIG, "report"])), undefined)
+        // right+right
+        assert.equal(quiet(() => parseArgs(["report", "-p", SAMPLE_TSCONFIG, "-p", SAMPLE_TSCONFIG])), undefined)
+    })
+
+    it("treats globals with no subcommand as a usage error, not help", () => {
+        assert.equal(quiet(() => parseArgs(["-p", SAMPLE_TSCONFIG])), undefined)
+        assert.equal(quiet(() => parseArgs(["--dry-run"])), undefined)
+    })
 })
