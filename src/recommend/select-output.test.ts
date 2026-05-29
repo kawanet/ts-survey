@@ -11,7 +11,7 @@ function makeStdout(): {writer: Writer; out: () => string} {
 }
 
 describe("selectOutput", () => {
-    it("returns a no-op finalize and the stdout stream when no format is selected", () => {
+    it("returns a no-op finalize and the stdout stream when no output is selected", () => {
         const {writer, out} = makeStdout()
         const f = selectOutput(null, writer)
         assert.equal(f.reportStream, writer)
@@ -44,7 +44,7 @@ describe("selectOutput", () => {
         assert.equal(out(), "ts-survey reformat \\\n  --semicolons off --indent 4\n")
     })
 
-    it("throws on an unknown format name", () => {
+    it("throws on an unknown output name", () => {
         const {writer} = makeStdout()
         assert.throws(() => selectOutput("typo-format", writer), /unknown --output: typo-format/)
     })
