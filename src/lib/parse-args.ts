@@ -1,15 +1,22 @@
-// argv → ParsedArgs. Subcommand grammar; the subcommand must be the first
-// argument (git-style), which lets each command define its own flag set
-// and arity:
-//   ts-survey help
-//   ts-survey report [--<report>...] [files...] [--output <name>] [-p tsconfig]
-//   ts-survey reformat [--indent N|tab ...] [files...] [-p tsconfig] [--dry-run]
-//   ts-survey list [--no-exports] [--no-importers] [--unused-exports] [files...]
-//   ts-survey inspect [--<inspector>...] [files...]
-//   ts-survey move <source...> <dest> [-p tsconfig] [--dry-run]
+// argv → ParsedArgs. Subcommand grammar (git-style):
+//   ts-survey [global...] <command> [command args...] [global...]
+//
+// Global options may appear on either side of the subcommand:
+//   -p / --project <path>   shared by every command
+//   --dry-run               applies to the write commands (reformat, move)
+//   -h / --help             shown anywhere
+// Command-specific options (--output, --semicolons, --no-exports, report /
+// inspector selectors, ...) stay to the RIGHT of the subcommand.
+//
+// Per command, after the globals are pulled out:
+//   report   [--<report>...] [files...] [--output <name>]
+//   reformat [--indent N|tab ...] [files...]
+//   list     [--no-exports] [--no-importers] [--unused-exports] [files...]
+//   inspect  [--<inspector>...] [files...]
+//   move     <source...> <dest>
 // Any non-dash argument after the subcommand is a file path (globs allowed,
-// except move where the last positional is the destination).
-// Selector validation stays in the runner.
+// except move where the last positional is the destination). Selector
+// validation stays in the runner.
 
 import path from "node:path"
 
@@ -26,6 +33,8 @@ export interface ApplyOverrides {
 }
 
 type Command = "report" | "reformat" | "list" | "inspect" | "move"
+
+const COMMANDS: readonly Command[] = ["report", "reformat", "list", "inspect", "move"] as const
 
 // `list` filter flags; OR-combined when more than one is set.
 interface ListFilters {
@@ -61,49 +70,106 @@ interface HelpRequested {
 
 type ParseArgsResult = ParsedArgs | HelpRequested
 
+// Global options collected position-independently, plus the leftover
+// tokens (the subcommand and its own arguments, in order).
+interface Globals {
+    tsconfigPath: string | null
+    dryRun: boolean
+    rest: string[]
+}
+
 export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     // `help` is the canonical spelling; -h / --help are aliases that win
-    // wherever they appear (including after a subcommand).
+    // wherever they appear (a global option, like the rest below).
     if (argv.includes("--help") || argv.includes("-h")) return {help: true}
 
-    const [command, ...rest] = argv
-    if (command === undefined || command === "help") return {help: true}
-    if (command === "report") return parseReport(rest)
-    if (command === "reformat") return parseReformat(rest)
-    if (command === "list") return parseList(rest)
-    if (command === "inspect") return parseInspect(rest)
-    if (command === "move") return parseMove(rest)
-    if (command.startsWith("-")) {
-        console.error("expected a subcommand: report, reformat, list, inspect, move, or help")
+    const globals = extractGlobals(argv)
+    if (globals === undefined) return undefined
+    const [command, ...sub] = globals.rest
+
+    if (command === undefined) {
+        // Bare invocation is help; globals with no subcommand is a usage error.
+        if (globals.tsconfigPath !== null || globals.dryRun) {
+            console.error("expected a subcommand: report, reformat, list, inspect, move, or help")
+            return undefined
+        }
+        return {help: true}
+    }
+    if (command === "help") return {help: true}
+    if (!(COMMANDS as readonly string[]).includes(command)) {
+        if (command.startsWith("-")) {
+            console.error("expected a subcommand: report, reformat, list, inspect, move, or help")
+        } else {
+            console.error(`unknown command: ${command} (expected: report, reformat, list, inspect, move, help)`)
+        }
         return undefined
     }
-    console.error(`unknown command: ${command} (expected: report, reformat, list, inspect, move, help)`)
-    return undefined
+
+    // --dry-run only means something for the write commands.
+    if (globals.dryRun && command !== "reformat" && command !== "move") {
+        console.error("--dry-run is only valid with reformat or move")
+        return undefined
+    }
+
+    switch (command as Command) {
+        case "report":
+            return parseReport(sub, globals)
+        case "reformat":
+            return parseReformat(sub, globals)
+        case "list":
+            return parseList(sub, globals)
+        case "inspect":
+            return parseInspect(sub, globals)
+        case "move":
+            return parseMove(sub, globals)
+    }
+}
+
+// Pulls the global options out of argv regardless of position, leaving the
+// subcommand and its own args in `rest`. `-p` given more than once (on
+// either side) is an error; `--dry-run` repeated is idempotent. So the
+// three duplicate shapes — left+left, left+right, right+right — behave
+// identically, which is the whole point of treating these as positionless.
+function extractGlobals(argv: string[]): Globals | undefined {
+    let tsconfigPath: string | null = null
+    let dryRun = false
+    const rest: string[] = []
+
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i]
+        if (a === "-p" || a === "--project") {
+            const v = argv[++i]
+            if (!v || v.startsWith("-")) {
+                console.error(`${a} requires a path (e.g. ${a} tsconfig.json)`)
+                return undefined
+            }
+            if (tsconfigPath !== null) {
+                console.error(`${a} cannot be combined with another tsconfig path`)
+                return undefined
+            }
+            tsconfigPath = v
+        } else if (a === "--dry-run") {
+            dryRun = true
+        } else {
+            rest.push(a)
+        }
+    }
+
+    return {tsconfigPath, dryRun, rest}
 }
 
 // `move`: positional args are `<source...> <dest>` — the parser only
 // validates the count and stores them as `paths`; the cli/dispatch layer
 // splits the list (last element → dest, the rest → sources) and hands
 // them to runMove.
-function parseMove(rest: string[]): ParseArgsResult | undefined {
+function parseMove(sub: string[], globals: Globals): ParseArgsResult | undefined {
     const files: string[] = []
-    let tsconfigPath: string | null = null
-    let dryRun = false
-
-    for (let i = 0; i < rest.length; i++) {
-        const a = rest[i]
-        if (a === "--dry-run") {
-            dryRun = true
-        } else if (a === "-p" || a === "--project") {
-            const v = takeProject(rest, ++i, a, tsconfigPath)
-            if (v === undefined) return undefined
-            tsconfigPath = v
-        } else if (a.startsWith("-")) {
+    for (const a of sub) {
+        if (a.startsWith("-")) {
             console.error(`unknown option: ${a}`)
             return undefined
-        } else {
-            files.push(a)
         }
+        files.push(a)
     }
 
     if (files.length < 2) {
@@ -111,25 +177,19 @@ function parseMove(rest: string[]): ParseArgsResult | undefined {
         return undefined
     }
 
-    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
-    return {command: "move", reportNames: [], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun, paths}
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
+    return {command: "move", reportNames: [], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths}
 }
 
 // `inspect`: per-file analysis. `--<inspector>` flags select which
 // inspectors run (default: all). Unknown `--<name>` becomes a selector
 // and is validated at runtime by runInspect (mirrors parseReport).
-function parseInspect(rest: string[]): ParseArgsResult | undefined {
+function parseInspect(sub: string[], globals: Globals): ParseArgsResult | undefined {
     const inspectorNames: string[] = []
     const files: string[] = []
-    let tsconfigPath: string | null = null
 
-    for (let i = 0; i < rest.length; i++) {
-        const a = rest[i]
-        if (a === "-p" || a === "--project") {
-            const v = takeProject(rest, ++i, a, tsconfigPath)
-            if (v === undefined) return undefined
-            tsconfigPath = v
-        } else if (a.startsWith("--")) {
+    for (const a of sub) {
+        if (a.startsWith("--")) {
             const name = a.slice(2)
             if (!inspectorNames.includes(name)) inspectorNames.push(name)
         } else if (a.startsWith("-")) {
@@ -141,31 +201,25 @@ function parseInspect(rest: string[]): ParseArgsResult | undefined {
     }
 
     const effective = inspectorNames.length > 0 ? inspectorNames : [...knownInspectorNames]
-    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
     return {command: "inspect", reportNames: [], inspectorNames: effective, output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: false, paths}
 }
 
 // `list`: cleanup-candidate filters plus positional files. Each flag is a
 // boolean; multiple are OR-combined downstream.
-function parseList(rest: string[]): ParseArgsResult | undefined {
+function parseList(sub: string[], globals: Globals): ParseArgsResult | undefined {
     const files: string[] = []
-    let tsconfigPath: string | null = null
     let noExports = false
     let noImporters = false
     let unusedExports = false
 
-    for (let i = 0; i < rest.length; i++) {
-        const a = rest[i]
+    for (const a of sub) {
         if (a === "--no-exports") {
             noExports = true
         } else if (a === "--no-importers") {
             noImporters = true
         } else if (a === "--unused-exports") {
             unusedExports = true
-        } else if (a === "-p" || a === "--project") {
-            const v = takeProject(rest, ++i, a, tsconfigPath)
-            if (v === undefined) return undefined
-            tsconfigPath = v
         } else if (a.startsWith("-")) {
             console.error(`unknown option: ${a}`)
             return undefined
@@ -174,7 +228,7 @@ function parseList(rest: string[]): ParseArgsResult | undefined {
         }
     }
 
-    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
     return {command: "list", reportNames: [], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: false, paths, listFilters: {noExports, noImporters, unusedExports}}
 }
 
@@ -182,25 +236,20 @@ function parseList(rest: string[]): ParseArgsResult | undefined {
 // `--output`, and positional files. Unknown `--<name>` is treated as a
 // report selector (validated later by runReports), matching how the old
 // positional report names behaved.
-function parseReport(rest: string[]): ParseArgsResult | undefined {
+function parseReport(sub: string[], globals: Globals): ParseArgsResult | undefined {
     const reportNames: string[] = []
     const files: string[] = []
     let output: string | null = null
-    let tsconfigPath: string | null = null
 
-    for (let i = 0; i < rest.length; i++) {
-        const a = rest[i]
+    for (let i = 0; i < sub.length; i++) {
+        const a = sub[i]
         if (a === "--output") {
-            const v = rest[++i]
+            const v = sub[++i]
             if (!v || v.startsWith("-")) {
                 console.error("--output requires a value (e.g. --output prettier)")
                 return undefined
             }
             output = v
-        } else if (a === "-p" || a === "--project") {
-            const v = takeProject(rest, ++i, a, tsconfigPath)
-            if (v === undefined) return undefined
-            tsconfigPath = v
         } else if (a.startsWith("--")) {
             const name = a.slice(2)
             if (!reportNames.includes(name)) reportNames.push(name)
@@ -214,35 +263,33 @@ function parseReport(rest: string[]): ParseArgsResult | undefined {
 
     const surveyDefault = reportNames.length === 0 && output === null
     const effectiveReports = reportNames.length > 0 ? reportNames : [...knownReportNames]
-    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
     return {command: "report", reportNames: effectiveReports, output, applyOverrides: {}, surveyDefault, tsconfigPath: absTsconfig, dryRun: false, paths}
 }
 
 // `reformat`: a fixed set of override options plus positional files.
-function parseReformat(rest: string[]): ParseArgsResult | undefined {
+function parseReformat(sub: string[], globals: Globals): ParseArgsResult | undefined {
     const overrides: ApplyOverrides = {}
     const files: string[] = []
-    let tsconfigPath: string | null = null
-    let dryRun = false
 
-    for (let i = 0; i < rest.length; i++) {
-        const a = rest[i]
+    for (let i = 0; i < sub.length; i++) {
+        const a = sub[i]
         if (a === "--organize-imports") {
-            const v = rest[++i]
+            const v = sub[++i]
             if (v !== "on" && v !== "off") {
                 console.error(`--organize-imports expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
                 return undefined
             }
             overrides.organizeImports = v
         } else if (a === "--semicolons") {
-            const v = rest[++i]
+            const v = sub[++i]
             if (v !== "on" && v !== "off") {
                 console.error(`--semicolons expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
                 return undefined
             }
             overrides.semicolons = v
         } else if (a === "--indent") {
-            const v = rest[++i]
+            const v = sub[++i]
             if (!v || v.startsWith("-")) {
                 console.error("--indent requires a positive integer or 'tab' (e.g. --indent 4)")
                 return undefined
@@ -260,25 +307,19 @@ function parseReformat(rest: string[]): ParseArgsResult | undefined {
             }
         } else if (a === "--new-line") {
             // `cr` rejected: LS formatter accepts \n / \r\n only.
-            const v = rest[++i]
+            const v = sub[++i]
             if (v !== "lf" && v !== "crlf") {
                 console.error(`--new-line expects 'lf' or 'crlf'; got: ${v ?? "(missing)"}`)
                 return undefined
             }
             overrides.newLine = v
         } else if (a === "--bracket-spacing") {
-            const v = rest[++i]
+            const v = sub[++i]
             if (v !== "on" && v !== "off") {
                 console.error(`--bracket-spacing expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
                 return undefined
             }
             overrides.bracketSpacing = v
-        } else if (a === "--dry-run") {
-            dryRun = true
-        } else if (a === "-p" || a === "--project") {
-            const v = takeProject(rest, ++i, a, tsconfigPath)
-            if (v === undefined) return undefined
-            tsconfigPath = v
         } else if (a.startsWith("-")) {
             console.error(`unknown option: ${a}`)
             return undefined
@@ -287,21 +328,8 @@ function parseReformat(rest: string[]): ParseArgsResult | undefined {
         }
     }
 
-    const {absTsconfig, paths} = resolvePaths(tsconfigPath, files)
-    return {command: "reformat", reportNames: [...applyReportNames], output: null, applyOverrides: overrides, surveyDefault: false, tsconfigPath: absTsconfig, dryRun, paths}
-}
-
-function takeProject(args: string[], idx: number, optName: string, existing: string | null): string | undefined {
-    const v = args[idx]
-    if (!v || v.startsWith("-")) {
-        console.error(`${optName} requires a path (e.g. ${optName} tsconfig.json)`)
-        return undefined
-    }
-    if (existing) {
-        console.error(`${optName} cannot be combined with another tsconfig path`)
-        return undefined
-    }
-    return v
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
+    return {command: "reformat", reportNames: [...applyReportNames], output: null, applyOverrides: overrides, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths}
 }
 
 // Resolve the tsconfig path and the positional files. Files are resolved
