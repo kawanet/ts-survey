@@ -235,4 +235,28 @@ describe("parseArgs", () => {
         const r = quiet(() => parseArgs(["reformat", "--output", "prettier", "-p", SAMPLE_TSCONFIG]))
         assert.equal(r, undefined)
     })
+
+    it("parses `list` with no filters", () => {
+        const r = parseArgs(["list", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.equal(r.command, "list")
+        assert.deepEqual(r.listFilters, {noExports: false, noImporters: false, unusedExports: false})
+    })
+
+    it("parses the `list` filter flags", () => {
+        const r = parseArgs(["list", "--no-exports", "--unused-exports", "-p", SAMPLE_TSCONFIG])
+        assert.ok(r && !("help" in r))
+        assert.deepEqual(r.listFilters, {noExports: true, noImporters: false, unusedExports: true})
+    })
+
+    it("accepts positional files under list", () => {
+        const r = parseArgs(["list", "-p", SAMPLE_TSCONFIG, "a.ts"])
+        assert.ok(r && !("help" in r))
+        assert.deepEqual(r.paths, [path.join(SAMPLE_DIR, "a.ts")])
+    })
+
+    it("returns undefined on an unknown list option", () => {
+        const r = quiet(() => parseArgs(["list", "--bogus", "-p", SAMPLE_TSCONFIG]))
+        assert.equal(r, undefined)
+    })
 })

@@ -77,8 +77,22 @@ export interface RunReformatOpts extends TsSurveyOpts {
     bracketSpacing?: "on" | "off"
 }
 
+// One row of `list` output: per-file export / usage counts. runList returns
+// the full set (unfiltered) so later commands can reuse the snapshot; the
+// CLI applies the --no-exports / --no-importers / --unused-exports filters.
+export interface ListEntry {
+    file: string
+    exports: number
+    unused: number
+    importers: number
+}
+
+export interface RunListOpts extends TsSurveyOpts {}
+
 export declare function initProject(tsconfigPath: string): Project
 
 export declare function runReports(project: Project, opts: RunReportsOpts): Promise<TsSurveyReport>
 
 export declare function runReformat(project: Project, opts: RunReformatOpts): Promise<void>
+
+export declare function runList(project: Project, opts: RunListOpts): Promise<ListEntry[]>
