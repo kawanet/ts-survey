@@ -1,4 +1,4 @@
-// --report bracket-spacing: classify object literals and destructuring
+// report bracket-spacing: classify object literals and destructuring
 // patterns by whether the inner content is padded with a space inside
 // the braces (`{ a: 1 }` vs `{a: 1}`). Picks the per-file primary, then
 // the file-count majority. Maps to FormatCodeSettings'

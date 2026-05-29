@@ -1,4 +1,4 @@
-// --report indent: classify each file by its primary leading width (the
+// report indent: classify each file by its primary leading width (the
 // one with the most lines in that file), then bucket files by that
 // primary. The recommendation is the primary the most files use — the
 // same "file-count majority" model the semicolons report uses.

@@ -1,6 +1,8 @@
-// argv → ParsedArgs. Two modes (report / apply) are mutually exclusive;
-// any apply-side override implicitly enables --apply, mirroring how
-// --format implies --report. tsconfig path mirrors `tsc -p`.
+// argv → ParsedArgs. Subcommand grammar:
+//   ts-survey [help | report [names...] | format] [--options]
+// The first non-dash token is the subcommand; remaining non-dash tokens
+// are collected as positionals (report names today, file args later), so
+// the same parser shape serves the planned ls / mv / inspect commands.
 
 import path from "node:path"
 
@@ -15,13 +17,18 @@ export interface ApplyOverrides {
     bracketSpacing?: "on" | "off"
 }
 
+type Command = "report" | "format"
+
 interface ParsedArgs {
-    apply: boolean
-    applyOverrides: ApplyOverrides
+    command: Command
+    // For report: the requested names (positionals) or the full registry.
+    // For format: the recommendation-bearing reports runApply consumes.
     reportNames: string[]
-    format: string | null
-    // True only when nothing was specified; gates the recommendation +
-    // .prettierrc blocks under the per-report Markdown.
+    // report-only: suppress Markdown and emit the named output instead.
+    output: string | null
+    applyOverrides: ApplyOverrides
+    // True only for a bare `report` (no names, no --output); gates the
+    // recommendation + .prettierrc blocks under the per-report Markdown.
     surveyDefault: boolean
     tsconfigPath: string
     dryRun: boolean
@@ -36,23 +43,22 @@ interface HelpRequested {
 type ParseArgsResult = ParsedArgs | HelpRequested
 
 export function parseArgs(argv: string[]): ParseArgsResult | undefined {
+    // `help` is the canonical spelling; -h / --help are aliases that win
+    // wherever they appear (including after a subcommand).
     if (argv.includes("--help") || argv.includes("-h")) return {help: true}
 
-    let applyExplicit = false
+    let command: string | null = null
+    const positionals: string[] = []
     const overrides: ApplyOverrides = {}
-    let format: string | null = null
+    let output: string | null = null
     let tsconfigPath: string | null = null
     let dryRun = false
     const includeGlobs: string[] = []
     const excludeGlobs: string[] = []
-    // De-duplicated in input order. Name validation lives in runReports.
-    const requestedReports: string[] = []
 
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i]
-        if (a === "--apply") {
-            applyExplicit = true
-        } else if (a === "--organize-imports") {
+        if (a === "--organize-imports") {
             const v = argv[++i]
             if (v !== "on" && v !== "off") {
                 console.error(`--organize-imports expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
@@ -98,28 +104,16 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
                 return undefined
             }
             overrides.bracketSpacing = v
-        } else if (a === "--report") {
+        } else if (a === "--output") {
             const v = argv[++i]
             if (!v || v.startsWith("-")) {
-                console.error("--report requires a report name (e.g. --report unused-exports)")
+                console.error("--output requires a value (e.g. --output prettier)")
                 return undefined
             }
-            for (const name of v
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)) {
-                if (!requestedReports.includes(name)) requestedReports.push(name)
-            }
+            // Name validation lives in selectFormat (same pattern as report names).
+            output = v
         } else if (a === "--dry-run") {
             dryRun = true
-        } else if (a === "--format") {
-            const v = argv[++i]
-            if (!v || v.startsWith("-")) {
-                console.error("--format requires a value (e.g. --format prettier)")
-                return undefined
-            }
-            // Name validation lives in selectFormat (same pattern as --report).
-            format = v
         } else if (a === "--include") {
             const v = takeGlobValue(argv, ++i, "--include")
             if (v === undefined) return undefined
@@ -142,31 +136,67 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         } else if (a.startsWith("-")) {
             console.error(`unknown option: ${a}`)
             return undefined
+        } else if (command === null) {
+            // First bare token is the subcommand; the rest are positionals.
+            command = a
         } else {
-            // Bare words rejected so a misspelt flag can't become a path.
-            console.error(`unexpected argument: ${a} (use -p / --project to set the tsconfig path)`)
+            positionals.push(a)
+        }
+    }
+
+    // No subcommand: bare invocation is help; options without a command
+    // are a usage error so a misplaced flag can't silently do nothing.
+    if (command === null) {
+        const sawOption = output !== null || dryRun || Object.keys(overrides).length > 0 || includeGlobs.length > 0 || excludeGlobs.length > 0 || tsconfigPath !== null
+        if (sawOption) {
+            console.error("expected a subcommand: report, format, or help")
+            return undefined
+        }
+        return {help: true}
+    }
+    if (command === "help") return {help: true}
+    if (command !== "report" && command !== "format") {
+        console.error(`unknown command: ${command} (expected: report, format, help)`)
+        return undefined
+    }
+
+    // Mode-specific option checks so a misplaced flag fails loudly.
+    if (command === "report") {
+        if (Object.keys(overrides).length > 0) {
+            console.error("apply overrides (--indent, --semicolons, etc.) are only valid with `format`")
+            return undefined
+        }
+        if (dryRun) {
+            console.error("--dry-run is only valid with `format`")
+            return undefined
+        }
+    } else {
+        if (output !== null) {
+            console.error("--output is only valid with `report`")
+            return undefined
+        }
+        if (positionals.length > 0) {
+            console.error(`format takes no positional arguments; got: ${positionals.join(" ")}`)
             return undefined
         }
     }
 
-    const hasOverride = Object.keys(overrides).length > 0
-    const apply = applyExplicit || hasOverride
-    const hasReport = requestedReports.length > 0
-    const hasFormat = format !== null
-    if (apply && hasReport) {
-        console.error("apply flags (--apply and per-field overrides) cannot be combined with --report")
-        return undefined
+    // report names: positionals (de-duplicated in order) or the full
+    // registry. format always runs the recommendation-bearing set.
+    // Name validation stays in runReports (runtime), not here.
+    let reportNames: string[]
+    let surveyDefault = false
+    if (command === "format") {
+        reportNames = [...applyReportNames]
+    } else if (positionals.length > 0) {
+        reportNames = []
+        for (const name of positionals) {
+            if (!reportNames.includes(name)) reportNames.push(name)
+        }
+    } else {
+        reportNames = [...knownReportNames]
+        surveyDefault = output === null
     }
-    if (apply && hasFormat) {
-        console.error("apply flags (--apply and per-field overrides) cannot be combined with --format")
-        return undefined
-    }
-
-    // surveyDefault gates the recommendation / .prettierrc summary blocks
-    // in cli.ts. With no --report, --apply takes applyReportNames only;
-    // other modes take the full union.
-    const surveyDefault = !apply && !hasReport && !hasFormat
-    const effectiveReports = hasReport ? requestedReports : apply ? [...applyReportNames] : [...knownReportNames]
 
     const absTsconfig = resolveTsconfigPath(tsconfigPath ?? ".")
 
@@ -176,10 +206,10 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     const absExcludes = excludeGlobs.map((g) => resolveGlob(g, tsconfigDir))
 
     return {
-        apply,
+        command,
+        reportNames,
+        output,
         applyOverrides: overrides,
-        reportNames: effectiveReports,
-        format,
         surveyDefault,
         tsconfigPath: absTsconfig,
         dryRun,

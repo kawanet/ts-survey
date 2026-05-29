@@ -1,4 +1,4 @@
-// --report unused-exports: list exports that have no external references.
+// report unused-exports: list exports that have no external references.
 // Walks getExportedDeclarations() and reverse-checks via findReferencesAsNodes.
 // Emits a Markdown table prefixed with `### unused-exports`.
 // barrel re-exports (`export * from`) are treated as references (passthrough).

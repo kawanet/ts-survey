@@ -1,5 +1,5 @@
-// applyReportNames are runApply's default report set; extraReportNames
-// are Markdown-only and skipped under --apply. Concat order is
+// applyReportNames are the format command's default report set;
+// extraReportNames are Markdown-only and skipped there. Concat order is
 // extras-first to match the pre-split survey layout.
 
 import type {TsSurveyReportName} from "@kawanet/ts-survey"
@@ -16,7 +16,7 @@ export const extraReportNames: readonly TsSurveyReportName[] = [
     "unused-exports",
 ] as const
 
-// Union: --report name validation + --help listing.
+// Union: report-name validation + help listing.
 export const reportNames: readonly TsSurveyReportName[] = [
     ...extraReportNames,
     ...applyReportNames,
