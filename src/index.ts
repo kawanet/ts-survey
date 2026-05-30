@@ -1,7 +1,5 @@
-// Public library entry. The CLI (refineCLI) routes through these same
-// runners, so the subcommand runner modules stay internal.
+// Public library entry.
 
-export {refineCLI} from "./cli/refine-cli.ts"
 export {refineFormat} from "./format/refine-format.ts"
 export {refineInspect} from "./inspect/refine-inspect.ts"
 export {initProject} from "./lib/init-project.ts"

@@ -9,15 +9,8 @@
 // console.error / the runners' own console output, which already target the
 // process's stderr/stdout.
 
-import type * as declared from "ts-refine"
-import type {InspectorName, TsRefineReportName} from "ts-refine"
-import {refineFormat} from "../format/refine-format.ts"
-import {refineInspect} from "../inspect/refine-inspect.ts"
+import {refineFormat, refineInspect, refineList, refineMove, refineRename, refineReport, type InspectorName, type TsRefineReportName} from "ts-refine"
 import {initProject} from "../lib/init-project.ts"
-import {refineList} from "../list/refine-list.ts"
-import {refineMove} from "../move/refine-move.ts"
-import {refineRename} from "../rename/refine-rename.ts"
-import {refineReport} from "../report/refine-report.ts"
 import {writeInspectFile} from "./format-inspect.ts"
 import {filterListEntries, writeListTable} from "./format-list.ts"
 import {writePrettierMarkdown} from "./output-prettier.ts"
@@ -26,7 +19,12 @@ import {parseArgs} from "./parse-args.ts"
 import {selectOutput} from "./select-output.ts"
 import {usage} from "./usage.ts"
 
-export const refineCLI: typeof declared.refineCLI = async (args, stream) => {
+// The whole CLI as a function: parse `args` (argv minus node/script),
+// dispatch the subcommand writing stdout-bound output to `stream`, and
+// resolve with the process exit status (0 ok, 1 on error). Never throws.
+type refineCLI = (args: string[], stream: {write: (line: string) => void}) => Promise<number>
+
+export const refineCLI: refineCLI = async (args, stream) => {
     const opts = parseArgs(args)
 
     // parseArgs returns undefined for argv errors (stderr already written),
