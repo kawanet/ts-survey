@@ -203,16 +203,24 @@ npx ts-refine rename --from funcA --to funcB --dry-run
 npx ts-refine rename --from funcA --to funcB src/lib.ts
 ```
 
-## Why not just Prettier?
-
-Style unification is Prettier's job, and `ts-refine` does not try to replace
-it. The value here is the **refactoring** operations that need to understand
-your code as a graph — moving a file and rewriting every importer, organizing
-imports the way your project already does, and renaming exported identifiers
-without guessing from text. The formatter exists mainly so those semantic edits
-blend into the surrounding file rather than fighting it.
-
 ## Questions
+
+- **Does it replace Prettier?**
+  - No. Style unification is Prettier's job. `ts-refine` is designed to coexist
+    with your existing formatter; it infers your style and formats small edits
+    only so they blend into the surrounding code without creating unnecessary
+    diffs.
+
+- **What is the core value of `ts-refine`?**
+  - The value lies in **semantic, graph-aware refactoring**. Unlike text-based
+    tools, it understands your code via the TypeScript Language Service. This
+    allows it to move files, organize imports, and rename exported symbols
+    project-wide with high precision.
+
+- **Can it delete unused code like Knip?**
+  - No. Knip excels at finding what to delete. `ts-refine` focuses on safely
+    moving and renaming the code you keep, ensuring all references and styles
+    remain intact.
 
 - **Does it require config?**
   - No. `ts-refine` reads your TypeScript project and infers the conventions
@@ -223,10 +231,6 @@ blend into the surrounding file rather than fighting it.
     `format --dry-run`, `move ... --dry-run`, or `rename ... --dry-run` before
     writing.
 
-- **Can it delete unused code like Knip?**
-  - No. Knip finds and removes unused files, dependencies, and exports.
-    `ts-refine` helps inspect, move, rename, and rewrite TypeScript code safely.
-
 - **What does `rename` rename?**
   - Exported identifiers and their references across the project. It is not a
     local-variable rename tool.
@@ -234,6 +238,5 @@ blend into the surrounding file rather than fighting it.
 - **What happens to import aliases?**
   - Aliases are kept while the exported name and references are updated.
 
-## License
 
 MIT
