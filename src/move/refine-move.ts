@@ -184,7 +184,7 @@ function isDirectoryDest(project: Project, dest: string): boolean {
     // ts-morph's in-memory FS does not register parent dirs until the
     // child file is saved; infer dir-ness from the source-file layout
     // so a fresh createSourceFile + refineMove flow still works.
-    const prefix = dest.endsWith("/") ? dest : dest + "/"
+    const prefix = dest + "/"
     for (const sf of project.getSourceFiles()) {
         if (sf.getFilePath().startsWith(prefix)) return true
     }
