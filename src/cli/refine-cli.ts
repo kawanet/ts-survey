@@ -11,7 +11,6 @@
 
 import type * as declared from "ts-refine"
 import type {InspectorName, TsRefineReportName} from "ts-refine"
-
 import {refineFormat} from "../format/refine-format.ts"
 import {refineInspect} from "../inspect/refine-inspect.ts"
 import {initProject} from "../lib/init-project.ts"

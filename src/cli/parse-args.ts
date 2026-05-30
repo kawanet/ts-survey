@@ -19,9 +19,8 @@
 // validation stays in the runner.
 
 import path from "node:path"
-
 import {inspectorNames as knownInspectorNames} from "../inspect/inspector-names.ts"
-import {FormatOptions} from "../recommend/format-options.ts"
+import type {FormatOptions} from "../recommend/format-options.ts"
 import {applyReportNames, reportNames as knownReportNames} from "../report/report-names.ts"
 
 type Command = "report" | "format" | "list" | "inspect" | "move" | "rename"

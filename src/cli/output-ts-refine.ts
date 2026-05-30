@@ -3,7 +3,6 @@
 // `grep -E '^ +--'` extract just the flags.
 
 import type {RefineReportOpts, TsRefineReport} from "ts-refine"
-
 import {type FormatOptions, reportToFormatOptions} from "../recommend/format-options.ts"
 
 // Local alias for readability — not exported.
