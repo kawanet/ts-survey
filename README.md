@@ -3,10 +3,12 @@
 [![Node.js CI](https://github.com/kawanet/ts-refine/actions/workflows/nodejs.yml/badge.svg?branch=main)](https://github.com/kawanet/ts-refine/actions/)
 [![npm version](https://img.shields.io/npm/v/ts-refine)](https://www.npmjs.com/package/ts-refine)
 
-Zero-config TypeScript refactoring that follows your codebase's **own**
-conventions. `ts-refine` surveys how your project already writes code, then
-performs structural edits — move files, organize imports, format — that match
-what it finds. No `.prettierrc`, no rule config: the codebase is the spec.
+Zero-config TypeScript refactoring that conforms to your codebase's **own**
+conventions instead of imposing its own. `ts-refine` infers how your project
+already writes code, then moves files, renames symbols, organizes imports, and
+formats — every edit landing in the style it detected, so it blends in rather
+than churning the diff. No `.prettierrc`, no rule config: the codebase is the
+spec.
 
 - Built on the TypeScript Language Service (via
   [ts-morph](https://github.com/dsherret/ts-morph)) — the same engine your
