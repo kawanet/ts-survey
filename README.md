@@ -45,11 +45,11 @@ npx ts-refine list
 # survey the code style and print recommendations
 npx ts-refine report
 
-# inspect one file's exports and importers
-npx ts-refine inspect src/foo.ts
-
 # apply the surveyed style and organize imports
 npx ts-refine format --dry-run
+
+# inspect one file's exports and importers
+npx ts-refine inspect src/foo.ts
 
 # move a file; every import of it is rewritten
 npx ts-refine move fileA.ts fileB.ts --dry-run
@@ -65,8 +65,8 @@ npx ts-refine rename --from funcA --to funcB --dry-run
 | `help`   | Show usage (also `-h`, `--help`, or no args)                       |
 | `list`   | List files with export / unused / importer counts                  |
 | `report` | Survey the codebase and print Markdown reports + recommendations   |
-| `inspect` | Show per-file exports and importer details                        |
 | `format` | Apply the surveyed style to disk and organize imports              |
+| `inspect` | Show per-file exports and importer details                        |
 | `move`   | Move `.ts` files and rewrite every import that references them      |
 | `rename` | Rename an exported identifier and every reference across the project |
 
@@ -119,23 +119,6 @@ npx ts-refine report --output prettier
 npx ts-refine report --output ts-refine
 ```
 
-## Inspect
-
-`inspect` prints per-file analysis — what a file exports and who imports it.
-Use it when `list` points at a candidate file and you want the detail before a
-move, rename, or deletion.
-
-```sh
-# run every inspector on the given file
-npx ts-refine inspect src/foo.ts
-
-# only the exports table
-npx ts-refine inspect --exports src/foo.ts
-
-# only the importers table
-npx ts-refine inspect --importers src/foo.ts
-```
-
 ## Format
 
 `format` rewrites every file to the surveyed conventions and organizes imports.
@@ -162,6 +145,23 @@ npx ts-refine format --bracket-spacing off
 
 # skip organizing imports (on by default)
 npx ts-refine format --organize-imports off
+```
+
+## Inspect
+
+`inspect` prints per-file analysis — what a file exports and who imports it.
+Use it when `list` points at a candidate file and you want the detail before a
+move, rename, or deletion.
+
+```sh
+# run every inspector on the given file
+npx ts-refine inspect src/foo.ts
+
+# only the exports table
+npx ts-refine inspect --exports src/foo.ts
+
+# only the importers table
+npx ts-refine inspect --importers src/foo.ts
 ```
 
 ## Move
