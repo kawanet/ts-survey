@@ -19,7 +19,7 @@ const rollupConfig: RollupOptions = {
         alias({
             entries: [
                 {
-                    find: /^(\.\.?\/)+index.ts$/,
+                    find: /^(\.\.?\/)+index\.ts$/,
                     replacement: "ts-refine",
                 },
             ],
