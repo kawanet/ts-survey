@@ -57,11 +57,11 @@
     "url": "git+https://github.com/kawanet/ts-refine.git"
   },
   "scripts": {
-    "build": "make -C builder all",
+    "build": "make -C builder",
     "fixpack": "fixpack",
     "format": "prettier --write 'src/**/*.ts'",
     "prepare": "make -C builder test",
-    "test": "node --test 'src/**/*.test.ts'"
+    "test": "make -C builder test"
   },
   "type": "module",
   "types": "./types/ts-refine.d.ts"

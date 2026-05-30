@@ -116,7 +116,7 @@ export declare namespace TSR {
 
     // Every inspector refineInspect knows about. Pair with src/inspect/inspector-names.ts
     // (runtime list) and src/inspect/refine-inspect.ts (dispatch).
-    export type InspectorName = "exports" | "importers"
+    type InspectorName = "exports" | "importers"
 
     interface InspectOpts extends CommonOpts {
         inspectorNames: InspectorName[]
