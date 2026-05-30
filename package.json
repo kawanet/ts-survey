@@ -32,8 +32,8 @@
   "files": [
     "LICENSE",
     "README.md",
-    "bin/ts-refine.cli.js",
     "dist/ts-refine.mjs",
+    "dist/ts-refine.cli.mjs",
     "src/**/*.ts",
     "!src/**/*.test.ts",
     "types/*.d.ts"
