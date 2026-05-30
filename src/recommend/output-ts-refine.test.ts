@@ -1,6 +1,6 @@
 import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
-import {writeFormatCommand, writeReformatMarkdown} from "./output-ts-refine.ts"
+import {writeFormatCommand, writeFormatMarkdown} from "./output-ts-refine.ts"
 
 function capture(fn: (s: {write: (chunk: string) => void}) => void): string {
     let out = ""
@@ -70,13 +70,13 @@ describe("writeReformatCommand", () => {
 
 describe("writeReformatMarkdown", () => {
     it("wraps the command in a `## recommendation` fenced block", () => {
-        const out = capture((s) => writeReformatMarkdown({semicolons: {semicolons: "off"}, indent: {width: 4}}, s))
+        const out = capture((s) => writeFormatMarkdown({semicolons: {semicolons: "off"}, indent: {width: 4}}, s))
         assert.match(out, /^## recommendation\n\n```sh\nts-refine format \\\n/)
         assert.match(out, /\n {2}--semicolons off --indent 4\n```\n\n$/)
     })
 
     it("emits nothing when no recommendations fired (no empty ## recommendation block)", () => {
-        const out = capture((s) => writeReformatMarkdown({}, s))
+        const out = capture((s) => writeFormatMarkdown({}, s))
         assert.equal(out, "")
     })
 })

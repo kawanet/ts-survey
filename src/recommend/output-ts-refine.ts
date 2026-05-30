@@ -37,7 +37,7 @@ export function writeFormatCommand(report: TsSurveyReport, stream: Writer): void
 
 // `## recommendation` block in the default-survey Markdown. Skipped
 // when no recommendations fired (the empty form carries no information).
-export function writeReformatMarkdown(report: TsSurveyReport, stream: Writer): void {
+export function writeFormatMarkdown(report: TsSurveyReport, stream: Writer): void {
     const flags = buildReformatFlags(reportToFormatOptions(report))
     if (flags.length === 0) return
     stream.write("## recommendation\n")
