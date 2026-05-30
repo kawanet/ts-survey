@@ -3,18 +3,19 @@
 [![Node.js CI](https://github.com/kawanet/ts-refine/actions/workflows/nodejs.yml/badge.svg?branch=main)](https://github.com/kawanet/ts-refine/actions/)
 [![npm version](https://img.shields.io/npm/v/ts-refine)](https://www.npmjs.com/package/ts-refine)
 
-Zero-config TypeScript refactoring that conforms to your codebase's **own**
-conventions instead of imposing its own. `ts-refine` infers how your project
-already writes code, then moves files, renames symbols, organizes imports, and
-formats — every edit landing in the style it detected, so it blends in rather
-than churning the diff. No `.prettierrc`, no rule config: the codebase is the
-spec.
+LS-based semantic refactoring for TypeScript codebases. `ts-refine` conforms
+to your codebase's **own** conventions instead of imposing its own: it infers
+how your project already writes code, then moves files, renames exports,
+rewrites imports, organizes imports, and formats small edits so they blend in.
+No `.prettierrc`, no rule config: the codebase is the spec.
 
 - Built on the TypeScript Language Service (via
   [ts-morph](https://github.com/dsherret/ts-morph)) — the same engine your
   editor uses for import rewriting and formatting.
-- Safe, low-friction cleanup after code changes — handy for both humans and AI
-  coding agents.
+- Useful when AI coding agents would otherwise reach for grep/sed and miss a
+  semantic import, move, or rename edge case.
+- Safe, low-friction cleanup after code changes — start with read commands or
+  `--dry-run`, then apply the same recommendation.
 
 ## Install
 
@@ -53,6 +54,7 @@ npx ts-refine rename --from funcA --to funcB --dry-run
 | `help`   | Show usage (also `-h`, `--help`, or no args)                       |
 | `list`   | List files with export / unused / importer counts                  |
 | `report` | Survey the codebase and print Markdown reports + recommendations   |
+| `inspect` | Show per-file exports and importer details                        |
 | `format` | Apply the surveyed style to disk and organize imports              |
 | `move`   | Move `.ts` files and rewrite every import that references them      |
 | `rename` | Rename an exported identifier and every reference across the project |
@@ -104,6 +106,23 @@ npx ts-refine report --output prettier
 
 # emit a runnable `format` command instead of Markdown
 npx ts-refine report --output ts-refine
+```
+
+## Inspect
+
+`inspect` prints per-file analysis — what a file exports and who imports it.
+Use it when `list` points at a candidate file and you want the detail before a
+move, rename, or deletion.
+
+```sh
+# run every inspector on the given file
+npx ts-refine inspect src/foo.ts
+
+# only the exports table
+npx ts-refine inspect --exports src/foo.ts
+
+# only the importers table
+npx ts-refine inspect --importers src/foo.ts
 ```
 
 ## Format
@@ -165,29 +184,33 @@ npx ts-refine rename src/lib.ts --from funcA --to funcB
 npx ts-refine rename --from funcA --to funcB --dry-run
 ```
 
-## Inspect
-
-`inspect` prints per-file analysis — what a file exports and who imports it.
-
-```sh
-# run every inspector on the given file
-npx ts-refine inspect src/foo.ts
-
-# only the exports table
-npx ts-refine inspect --exports src/foo.ts
-
-# only the importers table
-npx ts-refine inspect --importers src/foo.ts
-```
-
 ## Why not just Prettier?
 
 Style unification is Prettier's job, and `ts-refine` does not try to replace
 it. The value here is the **refactoring** operations that need to understand
 your code as a graph — moving a file and rewriting every importer, organizing
-imports the way your project already does — done with zero configuration. The
-formatter exists mainly so those edits blend into the surrounding file rather
-than fighting it.
+imports the way your project already does, and renaming exported identifiers
+without guessing from text. The formatter exists mainly so those semantic edits
+blend into the surrounding file rather than fighting it.
+
+## Questions
+
+**Does it require config?** No. `ts-refine` reads your TypeScript project and
+infers the conventions already present in the selected files.
+
+**Does it replace Prettier?** No. It does not try to impose a print width or a
+global style. Use Prettier when you want a formatter; use `ts-refine` when you
+want project-aware refactoring plus convention-following cleanup.
+
+**What should I try first?** Start with `list`, `report`, or `inspect`. For
+write commands, use `format --dry-run`, `move ... --dry-run`, or
+`rename ... --dry-run` before writing.
+
+**What does `rename` rename?** Exported identifiers and their references across
+the project. It is not a local-variable rename tool.
+
+**What happens to import aliases?** Aliases are kept while the exported name and
+references are updated.
 
 ## License
 

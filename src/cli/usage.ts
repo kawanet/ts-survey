@@ -6,27 +6,32 @@ import {reportNames} from "../report/report-names.ts"
 import {outputNames} from "./select-output.ts"
 
 export function usage(): string {
+    const reportFlags = reportNames.map((name) => `--${name}`).join(" ")
+    const inspectorFlags = inspectorNames.map((name) => `--${name}`).join(" ")
+    const outputFlags = outputNames.map((name) => `--output ${name}`).join(" / ")
+
     return [
         "Usage: ts-refine <command> [options] [files...]",
         "",
         "Commands:",
         "  help                        Show this help (also: no args, -h, --help)",
-        "  report [reports...]         Survey the codebase; print Markdown reports",
-        "  format                      Apply the reports' recommendations to disk",
+        "  report [--<report>...]      Survey the codebase; print Markdown reports",
+        "  format                      Apply inferred conventions and organize imports",
         "  list                        List files with export / usage counts",
-        "  inspect [inspectors...]     Per-file analysis (exports, importers, ...)",
+        "  inspect [--<inspector>...]  Per-file analysis (exports, importers, ...)",
         "  move <source...> <dest>     Move .ts files and rewrite import paths",
         "  rename --from <a> --to <b>  Rename an exported identifier project-wide",
         "",
         "report (read; the primary mode):",
         "  report                      Run every report and print the survey Markdown",
-        "  report --<report>...        Restrict to the named reports (e.g. --semicolons --indent)",
-        `                              Known reports: ${reportNames.join(", ")}`,
+        "  report --<report>...        Restrict to the named reports:",
+        `                              ${reportFlags}`,
         "  --output <name>             Suppress Markdown and emit the named output instead",
-        `                              Known outputs: ${outputNames.join(", ")}`,
+        `                              ${outputFlags}`,
+        "                              prettier: .prettierrc JSON; ts-refine: runnable format command",
         "",
-        "format (write; applies the reports' recommendations to disk):",
-        "  format                      Apply the recommended settings to every file",
+        "format (write; follows inferred conventions):",
+        "  format                      Apply the recommended settings and organize imports",
         "  --indent <N|tab>            Override indent width or use tabs",
         "  --semicolons on|off         Override semicolon insertion",
         "  --new-line lf|crlf          Override end-of-line",
@@ -42,8 +47,8 @@ export function usage(): string {
         "",
         "inspect (read; per-file analysis):",
         "  inspect                     Run every inspector on every file",
-        "  inspect --<inspector>...    Restrict to the named inspectors",
-        `                              Known inspectors: ${inspectorNames.join(", ")}`,
+        "  inspect --<inspector>...    Restrict to the named inspectors:",
+        `                              ${inspectorFlags}`,
         "",
         "move (write; relocate .ts files and rewrite the import paths):",
         "  move <source...> <dest>     mv-style: dest may be a directory (multi-source)",
@@ -63,8 +68,12 @@ export function usage(): string {
         "  --dry-run                   format/move/rename only: print instead of writing",
         "  -h, --help                  Show this help",
         "",
-        "Files (applies to all read/write commands):",
+        "File filters (report/format/list/inspect):",
         "  [files...]                  Restrict to the given files; globs are allowed,",
         "                              resolved against the tsconfig dir. Default: all.",
+        "",
+        "Command paths:",
+        "  move <source...> <dest>     Source and destination paths, not filters",
+        "  rename <file> --from ...    Optional file that disambiguates the export",
     ].join("\n")
 }
