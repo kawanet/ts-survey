@@ -7,7 +7,7 @@
 
 import type {Project} from "ts-morph"
 import {Node} from "ts-morph"
-import type {RunBracketSpacingOpts} from "ts-refine"
+import type {RefineBracketSpacingOpts} from "ts-refine"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import {pickRecommendByFiles} from "../recommend/pick-recommend.ts"
@@ -24,7 +24,7 @@ const STYLE_LABEL: Record<Style, string> = {
 
 type Bucket = {lines: number; files: number; topPath: string; topLines: number}
 
-export async function runReportBracketSpacing(project: Project, {stream, paths}: ReportOpts): Promise<Partial<RunBracketSpacingOpts>> {
+export async function runReportBracketSpacing(project: Project, {stream, paths}: ReportOpts): Promise<Partial<RefineBracketSpacingOpts>> {
     const sourceFiles = selectSourceFiles(project, {paths}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     type PerFile = {path: string; counts: Map<Style, number>; primary: Style}

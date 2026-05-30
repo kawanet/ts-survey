@@ -2,12 +2,12 @@
 // Two-line layout (`\` continuation + 2-space indent) lets
 // `grep -E '^ +--'` extract just the flags.
 
-import type {RunReportsOpts, TsSurveyReport} from "ts-refine"
+import type {RefineReportOpts, TsRefineReport} from "ts-refine"
 
 import {type FormatOptions, reportToFormatOptions} from "./format-options.ts"
 
 // Local alias for readability — not exported.
-type Writer = RunReportsOpts["stream"]
+type Writer = RefineReportOpts["stream"]
 
 // Returns argv-style tokens (flag and value pushed separately), the same
 // shape parseArgs consumes. Reads FormatOptions — the same value the
@@ -25,7 +25,7 @@ function buildFormatFlags(options: FormatOptions): string[] {
 // Always starts with the `format` command (the verb the recommendation
 // translates to). Empty recommendations still emit `ts-refine format`,
 // paralleling `--output prettier`'s empty `{}`.
-export function writeFormatCommand(report: TsSurveyReport, stream: Writer): void {
+export function writeFormatCommand(report: TsRefineReport, stream: Writer): void {
     const flags = buildFormatFlags(reportToFormatOptions(report))
     if (flags.length === 0) {
         stream.write("ts-refine format\n")
@@ -37,7 +37,7 @@ export function writeFormatCommand(report: TsSurveyReport, stream: Writer): void
 
 // `## recommendation` block in the default-survey Markdown. Skipped
 // when no recommendations fired (the empty form carries no information).
-export function writeFormatMarkdown(report: TsSurveyReport, stream: Writer): void {
+export function writeFormatMarkdown(report: TsRefineReport, stream: Writer): void {
     const flags = buildFormatFlags(reportToFormatOptions(report))
     if (flags.length === 0) return
     stream.write("## recommendation\n")

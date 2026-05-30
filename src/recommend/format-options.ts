@@ -9,7 +9,7 @@
 
 import type {FormatCodeSettings} from "ts-morph"
 import {ts} from "ts-morph"
-import type {TsSurveyReport} from "ts-refine"
+import type {TsRefineReport} from "ts-refine"
 
 import type {ApplyOverrides} from "../lib/parse-args.ts"
 
@@ -37,7 +37,7 @@ type MutableFormatSettings = {-readonly [K in keyof FormatCodeSettings]: FormatC
 
 // Recommendation → options. `cr` is read and discarded (see FormatOptions);
 // member-separators has no actionable mapping and is dropped too.
-export function reportToFormatOptions(report: TsSurveyReport): FormatOptions {
+export function reportToFormatOptions(report: TsRefineReport): FormatOptions {
     const options: FormatOptions = {}
     if (report.semicolons?.semicolons) options.semicolons = report.semicolons.semicolons
     if (report.indent?.width !== undefined) options.indent = report.indent.width

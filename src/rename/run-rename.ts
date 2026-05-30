@@ -19,7 +19,7 @@ import {organizeChangedImports} from "../recommend/organize-changed.ts"
 
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/
 
-export const runRename: typeof declared.runRename = async (project, opts) => {
+export const refineRename: typeof declared.refineRename = async (project, opts) => {
     const {from, to, file, dryRun, report} = opts
 
     if (!IDENT.test(from)) throw new Error(`rename: not a valid identifier: ${from}`)

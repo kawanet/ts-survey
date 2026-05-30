@@ -12,7 +12,7 @@ import type * as declared from "ts-refine"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 
-export const runList: typeof declared.runList = async (project, {paths}) => {
+export const refineList: typeof declared.refineList = async (project, {paths}) => {
     const sourceFiles = selectSourceFiles(project, {paths}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     const entries: declared.ListEntry[] = []

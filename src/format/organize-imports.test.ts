@@ -7,7 +7,7 @@ import path from "node:path"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
 
-import {runFormat} from "./run-format.ts"
+import {refineFormat} from "./run-format.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/basic/tsconfig.json")
 const INDEX = path.resolve(import.meta.dirname, "../../sample/basic/src/index.ts")
@@ -21,7 +21,7 @@ describe("runFormat (organize-imports path, dry-run, sample/basic)", () => {
         const before = project.getSourceFile(INDEX)!.getFullText()
         assert.ok(before.indexOf("./used.js") < before.indexOf("./partial.js"), "fixture should start with ./used.js before ./partial.js")
 
-        await runFormat(project, {dryRun: true, paths: [], report: {}})
+        await refineFormat(project, {dryRun: true, paths: [], report: {}})
 
         const after = project.getSourceFile(INDEX)!.getFullText()
         const pPos = after.indexOf("./partial.js")
@@ -34,7 +34,7 @@ describe("runFormat (organize-imports path, dry-run, sample/basic)", () => {
         const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
         // Old action hard-coded brace-spacing off; runFormat drives it via
         // the merged settings, so pin the override here.
-        await runFormat(project, {dryRun: true, paths: [], report: {}, bracketSpacing: "off"})
+        await refineFormat(project, {dryRun: true, paths: [], report: {}, bracketSpacing: "off"})
 
         const text = project.getSourceFile(INDEX)!.getFullText()
         // `{ usedConst,` with a leading space would indicate brace-spacing on.

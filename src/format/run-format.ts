@@ -8,7 +8,7 @@ import type * as declared from "ts-refine"
 import {selectSourceFiles} from "../lib/source-files.ts"
 import {mergeFormatOptions, normalizeNewLines, overridesToFormatOptions, reportToFormatOptions, resolveSettings} from "../recommend/format-options.ts"
 
-export const runFormat: typeof declared.runFormat = async (project, opts) => {
+export const refineFormat: typeof declared.refineFormat = async (project, opts) => {
     const {dryRun, paths, report, ...overrides} = opts
     // Report recommendation is the base; CLI overrides win per field.
     const options = mergeFormatOptions(reportToFormatOptions(report), overridesToFormatOptions(overrides))

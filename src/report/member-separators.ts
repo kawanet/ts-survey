@@ -11,7 +11,7 @@
 
 import type {ClassMemberTypes, Project, TypeElementTypes} from "ts-morph"
 import {Node} from "ts-morph"
-import type {RunMemberSeparatorsOpts} from "ts-refine"
+import type {RefineMemberSeparatorsOpts} from "ts-refine"
 
 import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 import {pickRecommendByFiles} from "../recommend/pick-recommend.ts"
@@ -31,7 +31,7 @@ const SEP_LABEL: Record<Separator, string> = {
 
 // Maps internal Separator symbols to RunMemberSeparatorsOpts.separator's
 // value space (semi / comma / none).
-const SEP_FLAG_VALUE: Record<Separator, RunMemberSeparatorsOpts["separator"]> = {
+const SEP_FLAG_VALUE: Record<Separator, RefineMemberSeparatorsOpts["separator"]> = {
     none: "none",
     ",": "comma",
     ";": "semi",
@@ -39,7 +39,7 @@ const SEP_FLAG_VALUE: Record<Separator, RunMemberSeparatorsOpts["separator"]> = 
 
 type Bucket = {lines: number; files: number; topPath: string; topLines: number}
 
-export async function runReportMemberSeparators(project: Project, {stream, paths}: ReportOpts): Promise<Partial<RunMemberSeparatorsOpts>> {
+export async function runReportMemberSeparators(project: Project, {stream, paths}: ReportOpts): Promise<Partial<RefineMemberSeparatorsOpts>> {
     const sourceFiles = selectSourceFiles(project, {paths}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
     type PerFile = {path: string; counts: Map<Separator, number>; primary: Separator}

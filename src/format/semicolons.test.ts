@@ -5,7 +5,7 @@ import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
-import {runFormat} from "./run-format.ts"
+import {refineFormat} from "./run-format.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/semicolons-mixed/tsconfig.json")
 
@@ -35,7 +35,7 @@ const SEMI_OFF = {dryRun: true, paths: [] as string[], organizeImports: "off" as
 describe("runFormat --semicolons off (dry-run, sample/semicolons-mixed)", () => {
     it("strips every trailing `;` from ASI-eligible statements in-memory", async () => {
         const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
-        await runFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
+        await refineFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
 
         // all-semi.ts and mixed.ts must end up with no trailing `;` on const lines.
         for (const suffix of ["/all-semi.ts", "/mixed.ts"]) {
@@ -55,7 +55,7 @@ describe("runFormat --semicolons off (dry-run, sample/semicolons-mixed)", () => 
 describe("runFormat --semicolons on (dry-run, sample/semicolons-mixed)", () => {
     it("appends `;` to every ASI-eligible statement lacking one", async () => {
         const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
-        await runFormat(project, {...SEMI_OFF, report: {}, semicolons: "on"})
+        await refineFormat(project, {...SEMI_OFF, report: {}, semicolons: "on"})
 
         // no-semi.ts and mixed.ts must converge on full-`;` on const lines.
         for (const suffix of ["/no-semi.ts", "/mixed.ts"]) {
@@ -81,7 +81,7 @@ describe("runFormat --semicolons off handles nested ASI-eligible statements", ()
         const project = new Project({useInMemoryFileSystem: true})
         const sf = project.createSourceFile("nest.ts", ["describe('outer', () => {", "  it('inner', () => {", "    const x = 1;", "    inner(x);", "  });", "});"].join("\n"))
 
-        await runFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
+        await refineFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
 
         const text = sf.getFullText()
         assert.equal(text.includes("const x = 1;"), false, "inner const lost its ;")
@@ -108,7 +108,7 @@ describe("runFormat --semicolons off keeps `;` at ASI-hazard sites", () => {
             ].join("\n"),
         )
 
-        await runFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
+        await refineFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
 
         const text = sf.getFullText()
         // The hazardous line must keep its `;` to avoid fusing into `1.toString()`.
@@ -127,7 +127,7 @@ describe("runFormat --semicolons off and do-while statements", () => {
         const project = new Project({useInMemoryFileSystem: true})
         const sf = project.createSourceFile("do-while.ts", ["let x = 0;", "do {", "  x++", "} while (x < 2);", "const y = x;"].join("\n"))
 
-        await runFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
+        await refineFormat(project, {...SEMI_OFF, report: {}, semicolons: "off"})
 
         const text = sf.getFullText()
         // Old action: `} while (x < 2);` retained. LS: `;` stripped.

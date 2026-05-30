@@ -49,7 +49,7 @@ function withExtension(specifier: string, ext: string): string {
     return specifier.replace(KNOWN_EXT, "") + ext
 }
 
-export const runMove: typeof declared.runMove = async (project, opts) => {
+export const refineMove: typeof declared.refineMove = async (project, opts) => {
     const {sources, dest, dryRun, report} = opts
 
     const plan = planMoves(project, sources, dest)

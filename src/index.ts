@@ -4,12 +4,12 @@
 import {Project} from "ts-morph"
 import type * as declared from "ts-refine"
 
-export {runFormat} from "./format/run-format.ts"
-export {runInspect} from "./inspect/run-inspect.ts"
-export {runList} from "./list/run-list.ts"
-export {runMove} from "./move/run-move.ts"
-export {runRename} from "./rename/run-rename.ts"
-export {runReports} from "./report/run-reports.ts"
+export {refineFormat} from "./format/run-format.ts"
+export {refineInspect} from "./inspect/run-inspect.ts"
+export {refineList} from "./list/run-list.ts"
+export {refineMove} from "./move/run-move.ts"
+export {refineRename} from "./rename/run-rename.ts"
+export {refineReport} from "./report/run-reports.ts"
 
 // Lets callers avoid a direct ts-morph dependency for the common case.
 export const initProject: typeof declared.initProject = (tsconfigPath) => new Project({tsConfigFilePath: tsconfigPath})

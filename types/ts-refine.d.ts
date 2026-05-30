@@ -2,7 +2,7 @@
  * https://github.com/kawanet/ts-refine
  */
 
-import type {Project} from "ts-morph";
+import type {Project} from "ts-morph"
 
 export {}; // external module indicator
 
@@ -16,57 +16,57 @@ interface TsSurveyOpts {
 // Recommendation shapes. Not runtime inputs — they describe the value
 // type of each `TsSurveyReport` slot.
 
-export interface RunSemicolonsOpts {
+export interface RefineSemicolonsOpts {
     semicolons: "on" | "off"
 }
 
 // "tab" recommends tab indentation (LS convertTabsToSpaces:false /
 // Prettier useTabs); a number recommends that many spaces.
-export interface RunIndentOpts {
+export interface RefineIndentOpts {
     width: number | "tab"
 }
 
-export interface RunMemberSeparatorsOpts {
+export interface RefineMemberSeparatorsOpts {
     separator: "semi" | "comma" | "none"
 }
 
-export interface RunNewLineOpts {
+export interface RefineNewLineOpts {
     newLine: "lf" | "crlf" | "cr"
 }
 
-export interface RunBracketSpacingOpts {
+export interface RefineBracketSpacingOpts {
     bracketSpacing: "on" | "off"
 }
 
 // Every report runReports knows about. Pair with src/report/report-names.ts
 // (runtime list) and src/report/run-reports.ts (dispatch).
-export type TsSurveyReportName =
+export type TsRefineReportName =
     | "semicolons"
     | "indent"
     | "member-separators"
     | "new-line"
     | "bracket-spacing"
 
-export interface RunReportsOpts extends TsSurveyOpts {
+export interface RefineReportOpts extends TsSurveyOpts {
     stream: {write: (line: string) => void}
-    reportNames: TsSurveyReportName[]
+    reportNames: TsRefineReportName[]
 }
 
 // Per-report recommendations. A missing key means the report didn't run
 // or had nothing to recommend.
-export interface TsSurveyReport {
-    semicolons?: Partial<RunSemicolonsOpts>
-    indent?: Partial<RunIndentOpts>
-    memberSeparators?: Partial<RunMemberSeparatorsOpts>
-    newLine?: Partial<RunNewLineOpts>
-    bracketSpacing?: Partial<RunBracketSpacingOpts>
+export interface TsRefineReport {
+    semicolons?: Partial<RefineSemicolonsOpts>
+    indent?: Partial<RefineIndentOpts>
+    memberSeparators?: Partial<RefineMemberSeparatorsOpts>
+    newLine?: Partial<RefineNewLineOpts>
+    bracketSpacing?: Partial<RefineBracketSpacingOpts>
 }
 
 // Input to `runFormat`. `report` provides defaults; the top-level
 // overrides win per field. `organizeImports` defaults to "on".
-export interface RunFormatOpts extends TsSurveyOpts {
+export interface RefineFormatOpts extends TsSurveyOpts {
     dryRun: boolean
-    report: TsSurveyReport
+    report: TsRefineReport
     organizeImports?: "on" | "off"
     indent?: number | "tab"
     semicolons?: "on" | "off"
@@ -86,7 +86,7 @@ export interface ListEntry {
     importers: number
 }
 
-export interface RunListOpts extends TsSurveyOpts {}
+export interface RefineListOpts extends TsSurveyOpts {}
 
 // Per-file inspect output. Each requested inspector populates its slot
 // (a missing key means the inspector did not run for this file).
@@ -122,7 +122,7 @@ export interface InspectImporter {
 // (runtime list) and src/inspect/run-inspect.ts (dispatch).
 export type InspectorName = "exports" | "importers"
 
-export interface RunInspectOpts extends TsSurveyOpts {
+export interface RefineInspectOpts extends TsSurveyOpts {
     inspectorNames: InspectorName[]
 }
 
@@ -131,11 +131,11 @@ export interface RunInspectOpts extends TsSurveyOpts {
 // a destination file path (single-source rename). After moving, imports of
 // the files whose specifiers changed are re-sorted (organizeImports) using
 // `report` — the project-wide surveyed style — so they converge on it.
-export interface RunMoveOpts {
+export interface RefineMoveOpts {
     sources: string[]
     dest: string
     dryRun: boolean
-    report: TsSurveyReport
+    report: TsRefineReport
 }
 
 // runMove returns the planned moves (from → to) and the set of in-project
@@ -153,12 +153,12 @@ export interface MoveResult {
 // -wide. Named exports only — default/expression exports are out of scope.
 // After renaming, the touched files' imports are re-sorted (organizeImports)
 // using `report` — the project-wide surveyed style.
-export interface RunRenameOpts {
+export interface RefineRenameOpts {
     from: string
     to: string
     file: string | null
     dryRun: boolean
-    report: TsSurveyReport
+    report: TsRefineReport
 }
 
 // runRename returns the applied rename and the in-project files whose text
@@ -171,14 +171,14 @@ export interface RenameResult {
 
 export declare function initProject(tsconfigPath: string): Project
 
-export declare function runReports(project: Project, opts: RunReportsOpts): Promise<TsSurveyReport>
+export declare function refineReport(project: Project, opts: RefineReportOpts): Promise<TsRefineReport>
 
-export declare function runFormat(project: Project, opts: RunFormatOpts): Promise<void>
+export declare function refineFormat(project: Project, opts: RefineFormatOpts): Promise<void>
 
-export declare function runList(project: Project, opts: RunListOpts): Promise<ListEntry[]>
+export declare function refineList(project: Project, opts: RefineListOpts): Promise<ListEntry[]>
 
-export declare function runInspect(project: Project, opts: RunInspectOpts): Promise<InspectFile[]>
+export declare function refineInspect(project: Project, opts: RefineInspectOpts): Promise<InspectFile[]>
 
-export declare function runMove(project: Project, opts: RunMoveOpts): Promise<MoveResult>
+export declare function refineMove(project: Project, opts: RefineMoveOpts): Promise<MoveResult>
 
-export declare function runRename(project: Project, opts: RunRenameOpts): Promise<RenameResult>
+export declare function refineRename(project: Project, opts: RefineRenameOpts): Promise<RenameResult>

@@ -5,11 +5,11 @@
 // are not passed in, so they stay as-is until `format` unifies them.
 
 import type {SourceFile} from "ts-morph"
-import type {TsSurveyReport} from "ts-refine"
+import type {TsRefineReport} from "ts-refine"
 
 import {reportToFormatOptions, resolveSettings} from "./format-options.ts"
 
-export function organizeChangedImports(files: Iterable<SourceFile>, report: TsSurveyReport): void {
+export function organizeChangedImports(files: Iterable<SourceFile>, report: TsRefineReport): void {
     const {formatSettings} = resolveSettings(reportToFormatOptions(report))
     for (const sf of files) sf.organizeImports(formatSettings)
 }

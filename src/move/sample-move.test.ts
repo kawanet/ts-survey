@@ -10,7 +10,7 @@ import os from "node:os"
 import path from "node:path"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
-import {runMove} from "./run-move.ts"
+import {refineMove} from "./run-move.ts"
 
 const SAMPLE_ROOT = path.resolve(import.meta.dirname, "../../sample")
 
@@ -32,7 +32,7 @@ describe("runMove against sample fixtures (one era per sample)", () => {
     it("sample/move-ts-ext: keeps the explicit `.ts` extension", async () => {
         await withSampleCopy("move-ts-ext", async (workdir) => {
             const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
-            await runMove(project, {
+            await refineMove(project, {
                 sources: [path.join(workdir, "src/lib.ts")],
                 dest: path.join(workdir, "src/util/"),
                 dryRun: false,
@@ -46,7 +46,7 @@ describe("runMove against sample fixtures (one era per sample)", () => {
     it("sample/move-js-ext: keeps the emit-style `.js` extension", async () => {
         await withSampleCopy("move-js-ext", async (workdir) => {
             const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
-            await runMove(project, {
+            await refineMove(project, {
                 sources: [path.join(workdir, "src/lib.ts")],
                 dest: path.join(workdir, "src/util/"),
                 dryRun: false,
@@ -60,7 +60,7 @@ describe("runMove against sample fixtures (one era per sample)", () => {
     it("sample/move-no-ext: keeps the legacy no-extension style", async () => {
         await withSampleCopy("move-no-ext", async (workdir) => {
             const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
-            await runMove(project, {
+            await refineMove(project, {
                 sources: [path.join(workdir, "src/lib.ts")],
                 dest: path.join(workdir, "src/util/"),
                 dryRun: false,
