@@ -33,9 +33,9 @@ export const refineInspect: typeof declared.refineInspect = async (project, opts
         ? project.getSourceFiles().filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
         : []
 
-    const results: declared.InspectFile[] = []
+    const results: declared.TSR.InspectFile[] = []
     for (const sf of targets) {
-        const entry: declared.InspectFile = {file: displayPath(sf.getFilePath())}
+        const entry: declared.TSR.InspectFile = {file: displayPath(sf.getFilePath())}
         if (requested.includes("exports")) entry.exports = gatherExports(sf)
         if (requested.includes("importers")) entry.importers = gatherImporters(sf, allFiles)
         results.push(entry)
@@ -49,8 +49,8 @@ export const refineInspect: typeof declared.refineInspect = async (project, opts
 // Per-file: one row per other source file that brings symbols / a
 // side-effect / a re-export / a dynamic import from this one. `kinds` and
 // `names` collapse multiple statements in the same importer into one row.
-function gatherImporters(target: SourceFile, allFiles: SourceFile[]): declared.InspectImporter[] {
-    const out: declared.InspectImporter[] = []
+function gatherImporters(target: SourceFile, allFiles: SourceFile[]): declared.TSR.InspectImporter[] {
+    const out: declared.TSR.InspectImporter[] = []
 
     for (const sf of allFiles) {
         if (sf === target) continue
@@ -137,8 +137,8 @@ function resolveModuleSpecifier(from: SourceFile, specifier: string): SourceFile
 // (re-export passthrough is skipped to avoid double counting). `importers`
 // counts distinct external source files using this export; `example` is
 // the alphabetically first such file, or null when unused.
-function gatherExports(sf: SourceFile): declared.InspectExport[] {
-    const out: declared.InspectExport[] = []
+function gatherExports(sf: SourceFile): declared.TSR.InspectExport[] {
+    const out: declared.TSR.InspectExport[] = []
 
     for (const [name, decls] of sf.getExportedDeclarations()) {
         for (const decl of decls) {

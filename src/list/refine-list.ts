@@ -14,7 +14,7 @@ import {displayPath, selectSourceFiles} from "../lib/source-files.ts"
 export const refineList: typeof declared.refineList = async (project, {paths}) => {
     const sourceFiles = selectSourceFiles(project, {paths}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))
 
-    const entries: declared.ListEntry[] = []
+    const entries: declared.TSR.ListEntry[] = []
     for (const sf of sourceFiles) {
         let exports = 0
         let unused = 0

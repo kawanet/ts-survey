@@ -9,18 +9,18 @@
 // swaps the report stream for a sink so the Markdown body doesn't mix
 // into the rendered output.
 
-import type {RefineReportOpts, TsRefineReport} from "ts-refine"
+import type {TSR} from "ts-refine"
 import {writePrettierConfig} from "./output-prettier.ts"
 import {writeFormatCommand} from "./output-ts-refine.ts"
 
 // Local alias for readability — not exported.
-type Writer = RefineReportOpts["stream"]
+type Writer = TSR.ReportOpts["stream"]
 
 export const outputNames = ["prettier", "ts-refine"] as const
 
 interface OutputDispatch {
     reportStream: Writer
-    finalize: (report: TsRefineReport) => void
+    finalize: (report: TSR.ReportResult) => void
 }
 
 const NULL_SINK: Writer = {write: () => {}}

@@ -9,7 +9,7 @@
 
 import type {FormatCodeSettings} from "ts-morph"
 import {ts} from "ts-morph"
-import type {TsRefineReport} from "ts-refine"
+import type {TSR} from "ts-refine"
 
 // `newLine` is lf|crlf only: a `cr` recommendation is neither a runnable
 // ts-refine flag nor an LS setting, so it never enters FormatOptions.
@@ -35,7 +35,7 @@ type MutableFormatSettings = {-readonly [K in keyof FormatCodeSettings]: FormatC
 
 // Recommendation → options. `cr` is read and discarded (see FormatOptions);
 // member-separators has no actionable mapping and is dropped too.
-export function reportToFormatOptions(report: TsRefineReport): FormatOptions {
+export function reportToFormatOptions(report: TSR.ReportResult): FormatOptions {
     const options: FormatOptions = {}
     if (report.semicolons?.semicolons) options.semicolons = report.semicolons.semicolons
     if (report.indent?.width !== undefined) options.indent = report.indent.width

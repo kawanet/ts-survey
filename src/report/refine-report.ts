@@ -26,7 +26,7 @@ export const refineReport: typeof declared.refineReport = async (project, opts) 
         }
     }
 
-    const report: declared.TsRefineReport = {}
+    const report: declared.TSR.ReportResult = {}
     const reportOpts: ReportOpts = {stream, paths}
 
     if (requested.includes("semicolons")) {
