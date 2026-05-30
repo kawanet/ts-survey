@@ -59,7 +59,9 @@ export const refineRename: typeof declared.refineRename = async (project, opts) 
     const collisions =
         fromT.ns === null
             ? [...targetFiles].filter((sf) => fileDeclaresTopLevel(sf, toT.name))
-            : findNamespaceMembers(project, fromT.ns, toT.name, file).map((n) => n.getSourceFile())
+            : // Always project-wide: a namespace is merged across files, so a
+              // colliding `ns.to` can sit in a file other than the renamed one.
+              findNamespaceMembers(project, fromT.ns, toT.name, null).map((n) => n.getSourceFile())
     if (collisions.length > 0) {
         const where = [...new Set(collisions)].map((sf) => displayPath(sf.getFilePath())).join(", ")
         throw new Error(`rename: \`${to}\` already exists in: ${where} (aliasing on collision is not supported yet)`)
@@ -142,15 +144,18 @@ function resolveNamespaceMember(project: Project, ns: string, name: string, file
 
 // Every name node for member `name` of a top-level namespace `ns`, across the
 // project (or a single file). Members are looked up structurally because they
-// are intentionally not `export`ed within the namespace.
+// are intentionally not `export`ed within the namespace. A namespace can be
+// declared as several `namespace ns {}` blocks (merged) within and across
+// files, so every matching block is scanned — getModule would see only one.
 function findNamespaceMembers(project: Project, ns: string, name: string, file: string | null): Identifier[] {
     const files = file ? [project.getSourceFileOrThrow(file)] : project.getSourceFiles()
     const nodes: Identifier[] = []
     for (const sf of files) {
-        const mod = sf.getModule(ns)
-        if (!mod) continue
-        const nn = namespaceMemberNameNode(mod, name)
-        if (nn) nodes.push(nn)
+        for (const mod of sf.getModules()) {
+            if (mod.getName() !== ns) continue
+            const nn = namespaceMemberNameNode(mod, name)
+            if (nn) nodes.push(nn)
+        }
     }
     return nodes
 }

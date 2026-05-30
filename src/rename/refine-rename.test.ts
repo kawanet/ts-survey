@@ -141,4 +141,33 @@ describe("refineRename", () => {
         project.createSourceFile("/types.ts", "export declare namespace NS {\n    interface A {}\n}\n")
         await assert.rejects(refineRename(project, {from: "NS.Nope", to: "NS.X", file: null, dryRun: true, report: NO_SPACE}), /no namespace member named/)
     })
+
+    it("finds a member declared in a later merged namespace block", async () => {
+        const project = newProject()
+        // Two `namespace NS {}` blocks in one file; the target is in the second.
+        const types = project.createSourceFile("/types.ts", "export declare namespace NS {\n    interface A {}\n}\nexport declare namespace NS {\n    interface C {}\n}\n")
+        const c = project.createSourceFile("/c.ts", "import type {NS} from \"./types.ts\"\nconst _: NS.C = {}\n")
+        await refineRename(project, {from: "NS.C", to: "NS.D", file: null, dryRun: true, report: NO_SPACE})
+        assert.match(types.getFullText(), /interface D {}/)
+        assert.match(c.getFullText(), /const _: NS\.D =/)
+    })
+
+    it("detects a target-name collision in another file of a merged namespace", async () => {
+        const project = newProject()
+        project.createSourceFile("/a.ts", "export declare namespace NS {\n    interface A {}\n}\n")
+        project.createSourceFile("/b.ts", "export declare namespace NS {\n    interface B {}\n}\n")
+        // Scoped to a.ts, but `NS.B` already exists in b.ts (same merged namespace).
+        await assert.rejects(refineRename(project, {from: "NS.A", to: "NS.B", file: "/a.ts", dryRun: true, report: NO_SPACE}), /already exists/)
+    })
+
+    it("renames every block of a merged-interface member (file-scoped)", async () => {
+        const project = newProject()
+        // `interface A` is declared in two merged NS blocks — one symbol.
+        const types = project.createSourceFile("/types.ts", "export declare namespace NS {\n    interface A {\n        x: number\n    }\n}\nexport declare namespace NS {\n    interface A {\n        y: number\n    }\n}\n")
+        await refineRename(project, {from: "NS.A", to: "NS.B", file: "/types.ts", dryRun: true, report: NO_SPACE})
+        const text = types.getFullText()
+        assert.doesNotMatch(text, /interface A {/)
+        // Both merged declarations follow the single symbol's rename.
+        assert.equal((text.match(/interface B {/g) ?? []).length, 2)
+    })
 })
