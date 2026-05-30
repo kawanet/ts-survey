@@ -6,8 +6,8 @@ import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
 
-import type {RunReformatOpts, TsSurveyReport} from "@kawanet/ts-survey"
-import {runReformat} from "./run-reformat.ts"
+import type {RunReformatOpts, TsSurveyReport} from "ts-refine"
+import {runReformat} from "./run-format.ts"
 
 // Builds RunReformatOpts with the indent override pinned and unrelated
 // passes (organize-imports) silenced so the test exercises only the
