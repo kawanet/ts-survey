@@ -206,18 +206,21 @@ blend into the surrounding file rather than fighting it.
 
 ## Questions
 
-**Does it require config?** No. `ts-refine` reads your TypeScript project and
-infers the conventions already present in the selected files.
+- **Does it require config?**
+  - No. `ts-refine` reads your TypeScript project and infers the conventions
+    already present in the selected files.
 
-**What should I try first?** Start with `list`, `report`, or `inspect`. For
-write commands, use `format --dry-run`, `move ... --dry-run`, or
-`rename ... --dry-run` before writing.
+- **What should I try first?**
+  - Start with `list`, `report`, or `inspect`. For write commands, use
+    `format --dry-run`, `move ... --dry-run`, or `rename ... --dry-run` before
+    writing.
 
-**What does `rename` rename?** Exported identifiers and their references across
-the project. It is not a local-variable rename tool.
+- **What does `rename` rename?**
+  - Exported identifiers and their references across the project. It is not a
+    local-variable rename tool.
 
-**What happens to import aliases?** Aliases are kept while the exported name and
-references are updated.
+- **What happens to import aliases?**
+  - Aliases are kept while the exported name and references are updated.
 
 ## License
 
