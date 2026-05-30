@@ -32,9 +32,9 @@ export interface ApplyOverrides {
     bracketSpacing?: "on" | "off"
 }
 
-type Command = "report" | "format" | "list" | "inspect" | "move"
+type Command = "report" | "format" | "list" | "inspect" | "move" | "rename"
 
-const COMMANDS: readonly Command[] = ["report", "format", "list", "inspect", "move"] as const
+const COMMANDS: readonly Command[] = ["report", "format", "list", "inspect", "move", "rename"] as const
 
 // `list` filter flags; OR-combined when more than one is set.
 interface ListFilters {
@@ -62,6 +62,11 @@ interface ParsedArgs {
     paths: string[]
     // list-only: which cleanup-candidate filters were requested.
     listFilters?: ListFilters
+    // rename-only: the identifier to rename and its replacement, plus an
+    // optional file (absolute) that scopes the lookup to its exports.
+    from?: string
+    to?: string
+    renameFile?: string | null
 }
 
 interface HelpRequested {
@@ -90,7 +95,7 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     if (command === undefined) {
         // Bare invocation is help; globals with no subcommand is a usage error.
         if (globals.tsconfigPath !== null || globals.dryRun) {
-            console.error("expected a subcommand: report, format, list, inspect, move, or help")
+            console.error("expected a subcommand: report, format, list, inspect, move, rename, or help")
             return undefined
         }
         return {help: true}
@@ -98,16 +103,16 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
     if (command === "help") return {help: true}
     if (!(COMMANDS as readonly string[]).includes(command)) {
         if (command.startsWith("-")) {
-            console.error("expected a subcommand: report, format, list, inspect, move, or help")
+            console.error("expected a subcommand: report, format, list, inspect, move, rename, or help")
         } else {
-            console.error(`unknown command: ${command} (expected: report, format, list, inspect, move, help)`)
+            console.error(`unknown command: ${command} (expected: report, format, list, inspect, move, rename, help)`)
         }
         return undefined
     }
 
     // --dry-run only means something for the write commands.
-    if (globals.dryRun && command !== "format" && command !== "move") {
-        console.error("--dry-run is only valid with format or move")
+    if (globals.dryRun && command !== "format" && command !== "move" && command !== "rename") {
+        console.error("--dry-run is only valid with format, move, or rename")
         return undefined
     }
 
@@ -122,6 +127,8 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
             return parseInspect(sub, globals)
         case "move":
             return parseMove(sub, globals)
+        case "rename":
+            return parseRename(sub, globals)
     }
 }
 
@@ -179,6 +186,48 @@ function parseMove(sub: string[], globals: Globals): ParseArgsResult | undefined
 
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
     return {command: "move", reportNames: [], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths}
+}
+
+// `rename`: rename an exported identifier. --from / --to are required; an
+// optional positional file scopes the lookup to that file's exports.
+function parseRename(sub: string[], globals: Globals): ParseArgsResult | undefined {
+    let from: string | undefined
+    let to: string | undefined
+    const files: string[] = []
+
+    for (let i = 0; i < sub.length; i++) {
+        const a = sub[i]
+        if (a === "--from") {
+            from = sub[++i]
+            if (!from || from.startsWith("-")) {
+                console.error("--from requires an identifier (e.g. --from oldName)")
+                return undefined
+            }
+        } else if (a === "--to") {
+            to = sub[++i]
+            if (!to || to.startsWith("-")) {
+                console.error("--to requires an identifier (e.g. --to newName)")
+                return undefined
+            }
+        } else if (a.startsWith("-")) {
+            console.error(`unknown option: ${a}`)
+            return undefined
+        } else {
+            files.push(a)
+        }
+    }
+
+    if (from === undefined || to === undefined) {
+        console.error("rename requires --from <name> and --to <name>")
+        return undefined
+    }
+    if (files.length > 1) {
+        console.error("rename accepts at most one file to scope the lookup")
+        return undefined
+    }
+
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
+    return {command: "rename", from, to, renameFile: paths[0] ?? null, reportNames: [], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths: []}
 }
 
 // `inspect`: per-file analysis. `--<inspector>` flags select which

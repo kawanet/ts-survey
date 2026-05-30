@@ -8,7 +8,7 @@ import type {InspectorName, TsSurveyReportName} from "ts-refine"
 
 import {selectOutput} from "./recommend/select-output.ts"
 import {writeInspectFile} from "./inspect/format-inspect.ts"
-import {initProject, runInspect, runList, runMove, runReformat, runReports} from "./index.ts"
+import {initProject, runInspect, runList, runMove, runReformat, runRename, runReports} from "./index.ts"
 import {filterListEntries, writeListTable} from "./list/format-list.ts"
 import {writePrettierMarkdown} from "./recommend/output-prettier.ts"
 import {writeReformatMarkdown} from "./recommend/output-ts-refine.ts"
@@ -56,6 +56,8 @@ try {
         const sources = opts.paths.slice(0, -1)
         const dest = opts.paths[opts.paths.length - 1]
         await runMove(project, {sources, dest, dryRun: opts.dryRun})
+    } else if (opts.command === "rename") {
+        await runRename(project, {from: opts.from!, to: opts.to!, file: opts.renameFile ?? null, dryRun: opts.dryRun})
     } else if (opts.command === "format") {
         const report = await runReports(project, {...fileOpts, reportNames, stream: NULL_SINK})
         await runReformat(project, {...fileOpts, dryRun: opts.dryRun, report, ...opts.applyOverrides})

@@ -128,9 +128,9 @@ export interface RunInspectOpts extends TsSurveyOpts {
 
 // Input to `runMove`. `sources` are absolute paths of existing project
 // source files; `dest` is either an existing directory (multi-source) or
-// a destination file path (single-source rename). ts-morph's move is
-// format-preserving on its own, so no FormatOptions / report input is
-// required here.
+// a destination file path (single-source rename). After moving, imports of
+// the files whose specifiers changed are re-sorted (organizeImports),
+// preserving each file's own brace-spacing — no report input is required.
 export interface RunMoveOpts {
     sources: string[]
     dest: string
@@ -146,6 +146,25 @@ export interface MoveResult {
     touched: string[]
 }
 
+// Input to `runRename`. Renames the exported identifier `from` to `to`
+// across the project. `file` (absolute path) restricts the lookup to that
+// file's exports; null means the symbol must be uniquely exported project
+// -wide. Named exports only — default/expression exports are out of scope.
+export interface RunRenameOpts {
+    from: string
+    to: string
+    file: string | null
+    dryRun: boolean
+}
+
+// runRename returns the applied rename and the in-project files whose text
+// was rewritten (declaration, importers, usages).
+export interface RenameResult {
+    from: string
+    to: string
+    touched: string[]
+}
+
 export declare function initProject(tsconfigPath: string): Project
 
 export declare function runReports(project: Project, opts: RunReportsOpts): Promise<TsSurveyReport>
@@ -157,3 +176,5 @@ export declare function runList(project: Project, opts: RunListOpts): Promise<Li
 export declare function runInspect(project: Project, opts: RunInspectOpts): Promise<InspectFile[]>
 
 export declare function runMove(project: Project, opts: RunMoveOpts): Promise<MoveResult>
+
+export declare function runRename(project: Project, opts: RunRenameOpts): Promise<RenameResult>
