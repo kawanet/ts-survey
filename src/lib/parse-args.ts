@@ -10,7 +10,7 @@
 //
 // Per command, after the globals are pulled out:
 //   report   [--<report>...] [files...] [--output <name>]
-//   format [--indent N|tab ...] [files...]
+//   format   [--indent N|tab ...] [files...]
 //   list     [--no-exports] [--no-importers] [--unused-exports] [files...]
 //   inspect  [--<inspector>...] [files...]
 //   move     <source...> <dest>
