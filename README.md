@@ -17,14 +17,6 @@ No `.prettierrc`, no rule config: the codebase is the spec.
 - Safe, low-friction cleanup after code changes — start with read commands or
   `--dry-run`, then apply the same recommendation.
 
-## Install
-
-Requires Node.js >= 22.18.
-
-```sh
-npx ts-refine <command> [options] [files...]
-```
-
 ## Synopsis
 
 ```sh
@@ -37,17 +29,41 @@ npx ts-refine list
 # survey the code style and print recommendations
 npx ts-refine report
 
-# inspect one file's exports and importers
-npx ts-refine inspect src/foo.ts
-
 # apply the surveyed style and organize imports
 npx ts-refine format --dry-run
+
+# inspect one file's exports and importers
+npx ts-refine inspect src/foo.ts
 
 # move a file; every import of it is rewritten
 npx ts-refine move fileA.ts fileB.ts --dry-run
 
 # rename an export across the whole project
 npx ts-refine rename --from funcA --to funcB --dry-run
+```
+
+## Install
+
+Requires Node.js >= 22.18.
+
+For one-off use, run it with `npx`:
+
+```sh
+npx ts-refine help
+```
+
+For reproducible project-local use, install it as a dev dependency:
+
+```sh
+npm install --save-dev ts-refine
+npx ts-refine help
+```
+
+For frequent command-line use, install it globally:
+
+```sh
+npm install -g ts-refine
+ts-refine help
 ```
 
 ## Commands
@@ -57,8 +73,8 @@ npx ts-refine rename --from funcA --to funcB --dry-run
 | `help`   | Show usage (also `-h`, `--help`, or no args)                       |
 | `list`   | List files with export / unused / importer counts                  |
 | `report` | Survey the codebase and print Markdown reports + recommendations   |
-| `inspect` | Show per-file exports and importer details                        |
 | `format` | Apply the surveyed style to disk and organize imports              |
+| `inspect` | Show per-file exports and importer details                        |
 | `move`   | Move `.ts` files and rewrite every import that references them      |
 | `rename` | Rename an exported identifier and every reference across the project |
 
@@ -111,23 +127,6 @@ npx ts-refine report --output prettier
 npx ts-refine report --output ts-refine
 ```
 
-## Inspect
-
-`inspect` prints per-file analysis — what a file exports and who imports it.
-Use it when `list` points at a candidate file and you want the detail before a
-move, rename, or deletion.
-
-```sh
-# run every inspector on the given file
-npx ts-refine inspect src/foo.ts
-
-# only the exports table
-npx ts-refine inspect --exports src/foo.ts
-
-# only the importers table
-npx ts-refine inspect --importers src/foo.ts
-```
-
 ## Format
 
 `format` rewrites every file to the surveyed conventions and organizes imports.
@@ -156,6 +155,23 @@ npx ts-refine format --bracket-spacing off
 npx ts-refine format --organize-imports off
 ```
 
+## Inspect
+
+`inspect` prints per-file analysis — what a file exports and who imports it.
+Use it when `list` points at a candidate file and you want the detail before a
+move, rename, or deletion.
+
+```sh
+# run every inspector on the given file
+npx ts-refine inspect src/foo.ts
+
+# only the exports table
+npx ts-refine inspect --exports src/foo.ts
+
+# only the importers table
+npx ts-refine inspect --importers src/foo.ts
+```
+
 ## Move
 
 `move` relocates `.ts` files and rewrites every import that references them.
@@ -164,11 +180,11 @@ npx ts-refine format --organize-imports off
 # move a file; every import of it is rewritten
 npx ts-refine move src/old/util.ts src/lib/util.ts
 
-# move several files into a directory
-npx ts-refine move src/a.ts src/b.ts src/lib/
-
 # preview the moves without writing
 npx ts-refine move src/old/util.ts src/lib/util.ts --dry-run
+
+# move several files into a directory
+npx ts-refine move src/a.ts src/b.ts src/lib/
 ```
 
 ## Rename
@@ -180,37 +196,50 @@ aliases intact.
 # rename an export and every reference across the project
 npx ts-refine rename --from funcA --to funcB
 
-# scope the lookup to one file when the name isn't unique
-npx ts-refine rename src/lib.ts --from funcA --to funcB
-
 # preview the rename without writing
 npx ts-refine rename --from funcA --to funcB --dry-run
+
+# rename the export from one file when the name isn't unique
+npx ts-refine rename --from funcA --to funcB src/lib.ts
 ```
 
-## Why not just Prettier?
+## FAQ
 
-Style unification is Prettier's job, and `ts-refine` does not try to replace
-it. The value here is the **refactoring** operations that need to understand
-your code as a graph — moving a file and rewriting every importer, organizing
-imports the way your project already does, and renaming exported identifiers
-without guessing from text. The formatter exists mainly so those semantic edits
-blend into the surrounding file rather than fighting it.
+- **Does it replace Prettier?**
+  - No. Comprehensive style enforcement is typically Prettier's job. While
+    `ts-refine` includes a `format` command, its primary goal is to ensure that
+    automated edits blend into your existing codebase's inferred style rather
+    than providing exhaustive configuration options.
 
-## Questions
+- **What is the core value of `ts-refine`?**
+  - The value lies in **semantic, graph-aware refactoring**. Unlike text-based
+    tools, it understands your code via the TypeScript Language Service. This
+    allows it to move files, organize imports, and rename exported symbols
+    project-wide with high precision.
 
-**Does it require config?** No. `ts-refine` reads your TypeScript project and
-infers the conventions already present in the selected files.
+- **Can it delete unused code like Knip?**
+  - No. Knip is specialized in finding and removing unused files and
+    dependencies. `ts-refine` can help you **find** and **inspect** unused
+    exports (via `list` and `inspect`), but it focuses on safely moving and
+    renaming the code you keep.
 
-**What should I try first?** Start with `list`, `report`, or `inspect`. For
-write commands, use `format --dry-run`, `move ... --dry-run`, or
-`rename ... --dry-run` before writing.
+- **Does it require config?**
+  - No. `ts-refine` reads your TypeScript project and infers the conventions
+    already present in the selected files.
 
-**What does `rename` rename?** Exported identifiers and their references across
-the project. It is not a local-variable rename tool.
+- **What should I try first?**
+  - Start with `list`, `report`, or `inspect`. For write commands, use
+    `format --dry-run`, `move ... --dry-run`, or `rename ... --dry-run` before
+    writing.
 
-**What happens to import aliases?** Aliases are kept while the exported name and
-references are updated.
+- **What does `rename` rename?**
+  - Exported identifiers and their references across the project. It is not a
+    local-variable rename tool.
 
-## License
+- **What happens to import aliases?**
+  - Aliases are kept while the exported name and references are updated.
 
-MIT
+## Links
+
+- https://github.com/kawanet/ts-refine
+- https://www.npmjs.com/package/ts-refine
