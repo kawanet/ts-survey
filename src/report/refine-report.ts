@@ -7,6 +7,7 @@
 // chain them into action calls (or render them via report --output).
 
 import type * as declared from "ts-refine"
+import type {TSR} from "ts-refine"
 import {runReportBracketSpacing} from "./bracket-spacing.ts"
 import {runReportIndent} from "./indent.ts"
 import {runReportMemberSeparators} from "./member-separators.ts"
@@ -26,7 +27,7 @@ export const refineReport: typeof declared.refineReport = async (project, opts) 
         }
     }
 
-    const report: declared.TSR.ReportResult = {}
+    const report: TSR.ReportResult = {}
     const reportOpts: ReportOpts = {stream, paths}
 
     if (requested.includes("semicolons")) {
