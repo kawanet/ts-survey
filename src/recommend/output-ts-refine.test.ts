@@ -8,7 +8,7 @@ function capture(fn: (s: {write: (chunk: string) => void}) => void): string {
     return out
 }
 
-describe("writeReformatCommand", () => {
+describe("writeFormatCommand", () => {
     it("maps semicolons.semicolons=off → --semicolons off", () => {
         const out = capture((s) => writeFormatCommand({semicolons: {semicolons: "off"}}, s))
         assert.equal(out, "ts-refine format \\\n  --semicolons off\n")
@@ -68,7 +68,7 @@ describe("writeReformatCommand", () => {
     })
 })
 
-describe("writeReformatMarkdown", () => {
+describe("writeFormatMarkdown", () => {
     it("wraps the command in a `## recommendation` fenced block", () => {
         const out = capture((s) => writeFormatMarkdown({semicolons: {semicolons: "off"}, indent: {width: 4}}, s))
         assert.match(out, /^## recommendation\n\n```sh\nts-refine format \\\n/)

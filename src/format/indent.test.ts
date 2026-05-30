@@ -9,7 +9,7 @@ import {Project} from "ts-morph"
 import type {RunFormatOpts, TsSurveyReport} from "ts-refine"
 import {runFormat} from "./run-format.ts"
 
-// Builds RunReformatOpts with the indent override pinned and unrelated
+// Builds RunFormatOpts with the indent override pinned and unrelated
 // passes (organize-imports) silenced so the test exercises only the
 // indent dimension.
 function opts(width: number): Omit<RunFormatOpts, "report"> & {report: TsSurveyReport} {
