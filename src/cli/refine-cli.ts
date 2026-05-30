@@ -9,8 +9,8 @@
 // console.error / the runners' own console output, which already target the
 // process's stderr/stdout.
 
-import {refineFormat, refineInspect, refineList, refineMove, refineRename, refineReport, type InspectorName, type TsRefineReportName} from "ts-refine"
-import {initProject} from "../lib/init-project.ts"
+import type {InspectorName, TsRefineReportName} from "ts-refine"
+import {initProject, refineFormat, refineInspect, refineList, refineMove, refineRename, refineReport} from "../index.ts"
 import {writeInspectFile} from "./format-inspect.ts"
 import {filterListEntries, writeListTable} from "./format-list.ts"
 import {writePrettierMarkdown} from "./output-prettier.ts"
@@ -47,7 +47,8 @@ export const refineCLI: refineCLI = async (args, stream) => {
     // Library throws (missing tsconfig, unknown report name) become a clean
     // non-zero status rather than an unhandled rejection.
     try {
-        const project = initProject(opts.tsconfigPath)
+        const tsConfigFilePath = opts.tsconfigPath
+        const project = initProject({tsConfigFilePath})
 
         if (opts.command === "list") {
             const entries = await refineList(project, fileOpts)
