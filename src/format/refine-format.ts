@@ -1,24 +1,17 @@
-// `format` command: resolve report + overrides → LS formatter + organizeImports.
+// `format` command: apply a resolved FormatStyle → LS formatter + organizeImports.
 // Order is formatText → organizeImports; the same FormatCodeSettings
-// feeds both so the rebuilt import block matches the file.
+// feeds both so the rebuilt import block matches the file. The caller merges the
+// survey recommendation with CLI overrides; refineFormat just applies the result.
 
 import fs from "node:fs/promises"
 import type * as declared from "ts-refine"
 import {selectSourceFiles} from "../lib/source-files.ts"
 import {applyTypeOnlyFixes} from "../lib/type-only-fixes.ts"
-import {mergeFormatOptions, normalizeNewLines, overridesToFormatOptions, reportToFormatOptions, resolveSettings} from "../recommend/format-options.ts"
+import {normalizeNewLines, resolveSettings} from "../recommend/format-options.ts"
 
 export const refineFormat: typeof declared.refineFormat = async (project, opts) => {
-    const {dryRun, paths, report, log, ...overrides} = opts
-    // Report recommendation is the base; CLI overrides win per field.
-    const options = mergeFormatOptions(reportToFormatOptions(report), overridesToFormatOptions(overrides))
-    const resolved = resolveSettings(options)
-
-    // `cr` is dropped from FormatOptions, so the diagnostic is sourced from
-    // the report here: recommended but unapplied unless the user overrode it.
-    if (overrides.newLine === undefined && report.newLine?.newLine === "cr") {
-        log.write("note: report recommends CR-only newlines; not applied (LS formatter supports LF/CRLF only)\n")
-    }
+    const {dryRun, paths, format, log} = opts
+    const resolved = resolveSettings(format)
 
     // .d.ts excluded — same scope every report uses for measurement.
     const sourceFiles = selectSourceFiles(project, {paths}).filter((sf) => !sf.getFilePath().endsWith(".d.ts"))

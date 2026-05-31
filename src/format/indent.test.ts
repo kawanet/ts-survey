@@ -11,8 +11,8 @@ import {refineFormat} from "./refine-format.ts"
 // Builds FormatOpts with the indent override pinned and unrelated
 // passes (organize-imports) silenced so the test exercises only the
 // indent dimension.
-function opts(width: number): Omit<TSR.FormatOpts, "report"> & {report: TSR.ReportResult} {
-    return {dryRun: true, paths: [], indent: width, organizeImports: "off", report: {}, log}
+function opts(width: number): TSR.FormatOpts {
+    return {dryRun: true, paths: [], format: {indent: width, organizeImports: "off"}, log}
 }
 
 const log = {write: () => {}}
@@ -35,7 +35,7 @@ describe("refineFormat --indent (dry-run, in-memory)", () => {
     it("converts space indent to a tab when indent=tab", async () => {
         const project = new Project({useInMemoryFileSystem: true})
         const sf = project.createSourceFile("tab.ts", ["function f() {", "    return 1", "}", ""].join("\n"))
-        await refineFormat(project, {log, dryRun: true, paths: [], indent: "tab", organizeImports: "off", report: {}})
+        await refineFormat(project, {log, dryRun: true, paths: [], format: {indent: "tab", organizeImports: "off"}})
         assert.match(sf.getFullText(), /\n\treturn 1\n/)
     })
 
