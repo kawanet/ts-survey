@@ -4,13 +4,13 @@
 
 import {initProject, refineFormat, refineReport} from "../../index.ts"
 import {reportNamesForFormat} from "../../recommend/format-options.ts"
-import {NULL_SINK} from "../cli-io.ts"
-import type {CommonArgs} from "../parse-common-args.ts"
+import {type Context, NULL_SINK} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseFormatArgs} from "./parse-format-args.ts"
 
-export async function runFormat(sub: string[], common: CommonArgs): Promise<number> {
-    const args = parseFormatArgs(sub, common)
+export async function runFormat(ctx: Context): Promise<number> {
+    const {args: common, tokens} = ctx
+    const args = parseFormatArgs(tokens, common)
     if (!args) return 1
     if (common.help) throw new Error("--help is not supported for the format command")
     const {absTsconfig, paths} = resolvePaths(common.tsconfigPath, args.paths)

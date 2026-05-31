@@ -15,7 +15,7 @@ async function run(args: string[]): Promise<{status: number; stdout: string; std
     const origErr = console.error
     console.error = (...a: unknown[]) => void errs.push(a.map(String).join(" "))
     try {
-        const status = await refineCLI(args, {write: (s) => void out.push(String(s))})
+        const status = await refineCLI({args: {}, tokens: args, stream: {write: (s) => void out.push(String(s))}})
         return {status, stdout: out.join(""), stderr: errs.join("\n")}
     } catch (e) {
         errs.push(e instanceof Error ? e.message : String(e))
