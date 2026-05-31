@@ -4,11 +4,11 @@
 
 import {initProject, refineFormat, refineReport} from "../../index.ts"
 import {reportNamesForFormat} from "../../recommend/format-options.ts"
-import {type Context, NULL_SINK} from "../cli-io.ts"
+import {type CLI, NULL_SINK} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseFormatArgs} from "./parse-format-args.ts"
 
-export async function runFormat(ctx: Context): Promise<number> {
+export const formatCLI: CLI = async (ctx) => {
     const {args: common, tokens, log} = ctx
     const args = parseFormatArgs(tokens, common)
     if (!args) return 1

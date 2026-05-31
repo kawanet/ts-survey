@@ -2,12 +2,12 @@
 // table to stdout.
 
 import {initProject, refineList} from "../../index.ts"
-import type {Context} from "../cli-io.ts"
+import type {CLI} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseListArgs} from "./parse-list-args.ts"
 import {filterListEntries, writeListTable} from "./write-list-table.ts"
 
-export async function runList(ctx: Context): Promise<number> {
+export const listCLI: CLI = async (ctx) => {
     const {args: common, tokens, output, log} = ctx
     const args = parseListArgs(tokens, common)
     if (!args) return 1

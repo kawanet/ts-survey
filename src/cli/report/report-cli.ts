@@ -3,7 +3,7 @@
 // Named reports and `--emit` paths skip those survey-only blocks.
 
 import {initProject, refineList, refineReport, type TSR} from "../../index.ts"
-import type {Context} from "../cli-io.ts"
+import type {CLI} from "../cli-io.ts"
 import {filterListEntries, writeListTable} from "../list/write-list-table.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {writePrettierMarkdown} from "./emit-prettier.ts"
@@ -11,7 +11,7 @@ import {writeFormatMarkdown} from "./emit-ts-refine.ts"
 import {parseReportArgs} from "./parse-report-args.ts"
 import {selectEmitter} from "./select-emitter.ts"
 
-export async function runReport(ctx: Context): Promise<number> {
+export const reportCLI: CLI = async (ctx) => {
     const {args: common, tokens, output, log} = ctx
     const args = parseReportArgs(tokens, common)
     if (!args) return 1

@@ -4,11 +4,11 @@
 
 import {initProject, refineMove, refineReport, type TSR} from "../../index.ts"
 import {applyReportNames} from "../../report/report-names.ts"
-import {type Context, NULL_SINK} from "../cli-io.ts"
+import {type CLI, NULL_SINK} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseMoveArgs} from "./parse-move-args.ts"
 
-export async function runMove(ctx: Context): Promise<number> {
+export const moveCLI: CLI = async (ctx) => {
     const {args: common, tokens, log} = ctx
     const args = parseMoveArgs(tokens, common)
     if (!args) return 1

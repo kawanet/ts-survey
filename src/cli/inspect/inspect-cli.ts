@@ -2,12 +2,12 @@
 // analysis to stdout.
 
 import {initProject, refineInspect, type TSR} from "../../index.ts"
-import type {Context} from "../cli-io.ts"
+import type {CLI} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseInspectArgs} from "./parse-inspect-args.ts"
 import {writeInspectFile} from "./write-inspect-file.ts"
 
-export async function runInspect(ctx: Context): Promise<number> {
+export const inspectCLI: CLI = async (ctx) => {
     const {args: common, tokens, output, log} = ctx
     const args = parseInspectArgs(tokens, common)
     if (!args) return 1
