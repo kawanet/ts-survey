@@ -75,12 +75,12 @@ export declare namespace TSR {
         bracketSpacing?: "on" | "off"
     }
 
-    // Input to `refineFormat`. `report` provides defaults; the top-level
-    // FormatOptions overrides win per field. `organizeImports` defaults to "on".
-    interface FormatOpts extends CommonOpts, FormatOptions {
+    // Input to `refineFormat`: the already-merged style to apply (survey
+    // recommendation + CLI overrides; `organizeImports` defaults to "on").
+    interface FormatOpts extends CommonOpts {
         paths: string[]
         dryRun: boolean
-        report: ReportResult
+        format: FormatOptions
     }
 
     // refineFormat returns the in-project files whose text was rewritten, so a
