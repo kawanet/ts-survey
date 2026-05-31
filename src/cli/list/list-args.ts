@@ -1,9 +1,22 @@
 // `list`: cleanup-candidate filters plus positional files. Each flag is a
 // boolean; multiple are OR-combined downstream.
 
-import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+import {type CommandGlobals, resolvePaths} from "../args-common.ts"
 
-export function parseList(sub: string[], globals: Globals): ParseArgsResult | undefined {
+// `list` filter flags; OR-combined when more than one is set.
+export interface ListFilters {
+    noExports: boolean
+    noImporters: boolean
+    unusedExports: boolean
+}
+
+export interface ListArgs {
+    tsconfigPath: string
+    paths: string[]
+    listFilters: ListFilters
+}
+
+export function parseList(sub: string[], globals: CommandGlobals): ListArgs | undefined {
     const files: string[] = []
     let noExports = false
     let noImporters = false
@@ -25,5 +38,5 @@ export function parseList(sub: string[], globals: Globals): ParseArgsResult | un
     }
 
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
-    return {command: "list", reportNames: [], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: false, paths, listFilters: {noExports, noImporters, unusedExports}}
+    return {tsconfigPath: absTsconfig, paths, listFilters: {noExports, noImporters, unusedExports}}
 }

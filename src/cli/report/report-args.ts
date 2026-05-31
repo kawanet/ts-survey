@@ -4,9 +4,21 @@
 // positional report names behaved.
 
 import {reportNames as knownReportNames} from "../../report/report-names.ts"
-import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+import {type CommandGlobals, resolvePaths} from "../args-common.ts"
 
-export function parseReport(sub: string[], globals: Globals): ParseArgsResult | undefined {
+export interface ReportArgs {
+    tsconfigPath: string
+    paths: string[]
+    // The requested selectors, or the full registry when none are given.
+    reportNames: string[]
+    // Suppress Markdown and emit the named output instead.
+    output: string | null
+    // True only for a bare `report` (no selectors, no --output); gates the
+    // recommendation + .prettierrc blocks under the per-report Markdown.
+    surveyDefault: boolean
+}
+
+export function parseReport(sub: string[], globals: CommandGlobals): ReportArgs | undefined {
     const reportNames: string[] = []
     const files: string[] = []
     let output: string | null = null
@@ -34,5 +46,5 @@ export function parseReport(sub: string[], globals: Globals): ParseArgsResult | 
     const surveyDefault = reportNames.length === 0 && output === null
     const effectiveReports = reportNames.length > 0 ? reportNames : [...knownReportNames]
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
-    return {command: "report", reportNames: effectiveReports, output, applyOverrides: {}, surveyDefault, tsconfigPath: absTsconfig, dryRun: false, paths}
+    return {tsconfigPath: absTsconfig, paths, reportNames: effectiveReports, output, surveyDefault}
 }

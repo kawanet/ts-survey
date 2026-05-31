@@ -3,9 +3,16 @@
 // and is validated at runtime by refineInspect (mirrors parseReport).
 
 import {inspectorNames as knownInspectorNames} from "../../inspect/inspector-names.ts"
-import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+import {type CommandGlobals, resolvePaths} from "../args-common.ts"
 
-export function parseInspect(sub: string[], globals: Globals): ParseArgsResult | undefined {
+export interface InspectArgs {
+    tsconfigPath: string
+    paths: string[]
+    // The requested inspector selectors, or the full registry.
+    inspectorNames: string[]
+}
+
+export function parseInspect(sub: string[], globals: CommandGlobals): InspectArgs | undefined {
     const inspectorNames: string[] = []
     const files: string[] = []
 
@@ -23,5 +30,5 @@ export function parseInspect(sub: string[], globals: Globals): ParseArgsResult |
 
     const effective = inspectorNames.length > 0 ? inspectorNames : [...knownInspectorNames]
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
-    return {command: "inspect", reportNames: [], inspectorNames: effective, output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: false, paths}
+    return {tsconfigPath: absTsconfig, paths, inspectorNames: effective}
 }

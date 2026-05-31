@@ -1,10 +1,16 @@
 // `format`: a fixed set of override options plus positional files.
 
-import {applyReportNames} from "../../report/report-names.ts"
 import type {FormatOptions} from "../../recommend/format-options.ts"
-import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+import {type CommandGlobals, resolvePaths} from "../args-common.ts"
 
-export function parseFormat(sub: string[], globals: Globals): ParseArgsResult | undefined {
+export interface FormatArgs {
+    tsconfigPath: string
+    paths: string[]
+    dryRun: boolean
+    applyOverrides: FormatOptions
+}
+
+export function parseFormat(sub: string[], globals: CommandGlobals): FormatArgs | undefined {
     const overrides: FormatOptions = {}
     const files: string[] = []
 
@@ -65,5 +71,5 @@ export function parseFormat(sub: string[], globals: Globals): ParseArgsResult | 
     }
 
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
-    return {command: "format", reportNames: [...applyReportNames], output: null, applyOverrides: overrides, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths}
+    return {tsconfigPath: absTsconfig, paths, dryRun: globals.dryRun, applyOverrides: overrides}
 }

@@ -1,61 +1,40 @@
-// Shared pieces of the CLI argument grammar: the subcommand list, the
-// position-independent global options, and the type a per-command parser
-// returns. The per-command parsers live in src/cli/<command>/<command>-args.ts
-// and lean on the helpers here.
+// Shared pieces of the CLI argument grammar. parseArgs (in parse-args.ts)
+// only resolves the globals and the subcommand; it returns CommonArgs with the
+// leftover tokens in `rest`, and the per-command parser in
+// src/cli/<command>/<command>-args.ts turns those into its own typed args.
 
 import path from "node:path"
-import type {FormatOptions} from "../recommend/format-options.ts"
 
 export type Command = "report" | "format" | "list" | "inspect" | "move" | "rename"
 
 export const COMMANDS: readonly Command[] = ["report", "format", "list", "inspect", "move", "rename"] as const
 
-// `list` filter flags; OR-combined when more than one is set.
-export interface ListFilters {
-    noExports: boolean
-    noImporters: boolean
-    unusedExports: boolean
-}
-
-export interface ParsedArgs {
+// Result of the common pass: the chosen subcommand, the globals, and the
+// still-unparsed tokens to its right. The per-command parser consumes `rest`.
+export interface CommonArgs {
     command: Command
-    // For report: the requested selectors or the full registry.
-    // For format: the recommendation-bearing reports refineFormat consumes.
-    reportNames: string[]
-    // inspect-only: the requested inspector selectors, or the full registry.
-    inspectorNames?: string[]
-    // report-only: suppress Markdown and emit the named output instead.
-    output: string | null
-    applyOverrides: FormatOptions
-    // True only for a bare `report` (no selectors, no --output); gates the
-    // recommendation + .prettierrc blocks under the per-report Markdown.
-    surveyDefault: boolean
-    tsconfigPath: string
+    tsconfigPath: string | null
     dryRun: boolean
-    // Positional file arguments, resolved to absolute (globs allowed).
-    paths: string[]
-    // list-only: which cleanup-candidate filters were requested.
-    listFilters?: ListFilters
-    // rename-only: the identifier to rename and its replacement, plus an
-    // optional file (absolute) that scopes the lookup to its exports.
-    from?: string
-    to?: string
-    renameFile?: string | null
+    rest: string[]
 }
 
 export interface HelpRequested {
     help: true
 }
 
-export type ParseArgsResult = ParsedArgs | HelpRequested
+export type ParseArgsResult = CommonArgs | HelpRequested
 
-// Global options collected position-independently, plus the leftover
-// tokens (the subcommand and its own arguments, in order).
+// Global options collected position-independently, plus the leftover tokens
+// (the subcommand and its own arguments, in order).
 export interface Globals {
     tsconfigPath: string | null
     dryRun: boolean
     rest: string[]
 }
+
+// The slice of the globals a per-command parser needs: the raw tsconfig path
+// (resolved per command via resolvePaths) and the dry-run flag.
+export type CommandGlobals = Pick<Globals, "tsconfigPath" | "dryRun">
 
 // Pulls the global options out of argv regardless of position, leaving the
 // subcommand and its own args in `rest`. `-p` given more than once (on

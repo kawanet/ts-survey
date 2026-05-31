@@ -1,12 +1,17 @@
 // `move`: positional args are `<source...> <dest>` — the parser only
-// validates the count and stores them as `paths`; the cli/dispatch layer
-// splits the list (last element → dest, the rest → sources) and hands
-// them to refineMove.
+// validates the count and stores them as `paths`; the runner splits the
+// list (last element → dest, the rest → sources) and hands them to refineMove.
 
-import {applyReportNames} from "../../report/report-names.ts"
-import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+import {type CommandGlobals, resolvePaths} from "../args-common.ts"
 
-export function parseMove(sub: string[], globals: Globals): ParseArgsResult | undefined {
+export interface MoveArgs {
+    tsconfigPath: string
+    // Flat `<source...> <dest>` list; the runner splits off the destination.
+    paths: string[]
+    dryRun: boolean
+}
+
+export function parseMove(sub: string[], globals: CommandGlobals): MoveArgs | undefined {
     const files: string[] = []
     for (const a of sub) {
         if (a.startsWith("-")) {
@@ -22,6 +27,5 @@ export function parseMove(sub: string[], globals: Globals): ParseArgsResult | un
     }
 
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
-    // move surveys the project to drive its post-move organizeImports.
-    return {command: "move", reportNames: [...applyReportNames], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths}
+    return {tsconfigPath: absTsconfig, paths, dryRun: globals.dryRun}
 }

@@ -1,10 +1,11 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {parseArgs} from "../parse-args.ts"
+import {parseFormat} from "./format-args.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../../sample/basic/tsconfig.json")
 const SAMPLE_DIR = path.dirname(SAMPLE_TSCONFIG)
+const G = {tsconfigPath: SAMPLE_TSCONFIG, dryRun: false}
 
 // Silences the expected stderr writes so the test output stays clean.
 function quiet<T>(fn: () => T): T {
@@ -17,108 +18,91 @@ function quiet<T>(fn: () => T): T {
     }
 }
 
-describe("parseArgs format", () => {
-    it("treats `format` as the write mode and feeds the format report set", () => {
-        const r = parseArgs(["format", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.command, "format")
+describe("parseFormat", () => {
+    it("parses an empty override set with no options", () => {
+        const r = parseFormat([], G)
+        assert.ok(r)
         assert.deepEqual(r.applyOverrides, {})
-        assert.ok(r.reportNames.includes("semicolons"))
+        assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
     })
 
-    it("accepts positional files under format", () => {
-        const r = parseArgs(["format", "-p", SAMPLE_TSCONFIG, "a.ts", "b.ts"])
-        assert.ok(r && !("help" in r))
+    it("accepts positional files", () => {
+        const r = parseFormat(["a.ts", "b.ts"], G)
+        assert.ok(r)
         assert.deepEqual(r.paths, [path.join(SAMPLE_DIR, "a.ts"), path.join(SAMPLE_DIR, "b.ts")])
     })
 
-    it("runs every recommendation-bearing report under `format`", () => {
-        const r = parseArgs(["format"])
-        assert.ok(r && !("help" in r))
-        // surveyDefault gates the recommendation Markdown blocks only.
-        assert.equal(r.surveyDefault, false)
-        assert.ok(r.reportNames.includes("semicolons"))
-        assert.ok(r.reportNames.includes("bracket-spacing"))
-    })
-
-    it("returns undefined on an unknown format option", () => {
-        const r = quiet(() => parseArgs(["format", "--definitely-not-a-flag", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+    it("returns undefined on an unknown option", () => {
+        assert.equal(
+            quiet(() => parseFormat(["--definitely-not-a-flag"], G)),
+            undefined,
+        )
     })
 
     it("rejects --semicolons with an invalid value", () => {
-        const r = quiet(() => parseArgs(["format", "--semicolons", "yes", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+        assert.equal(
+            quiet(() => parseFormat(["--semicolons", "yes"], G)),
+            undefined,
+        )
     })
 
-    it("accepts --semicolons on|off under format", () => {
-        const on = parseArgs(["format", "--semicolons", "on", "-p", SAMPLE_TSCONFIG])
-        assert.ok(on && !("help" in on))
-        assert.equal(on.command, "format")
-        assert.equal(on.applyOverrides.semicolons, "on")
-        const off = parseArgs(["format", "--semicolons", "off", "-p", SAMPLE_TSCONFIG])
-        assert.ok(off && !("help" in off))
-        assert.equal(off.applyOverrides.semicolons, "off")
+    it("accepts --semicolons on|off", () => {
+        assert.equal(parseFormat(["--semicolons", "on"], G)?.applyOverrides.semicolons, "on")
+        assert.equal(parseFormat(["--semicolons", "off"], G)?.applyOverrides.semicolons, "off")
     })
 
-    it("accepts --indent N under format", () => {
-        const r = parseArgs(["format", "--indent", "4", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.command, "format")
-        assert.equal(r.applyOverrides.indent, 4)
+    it("accepts --indent N", () => {
+        assert.equal(parseFormat(["--indent", "4"], G)?.applyOverrides.indent, 4)
     })
 
     it("rejects --indent with a non-positive integer", () => {
-        const r = quiet(() => parseArgs(["format", "--indent", "0", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+        assert.equal(
+            quiet(() => parseFormat(["--indent", "0"], G)),
+            undefined,
+        )
     })
 
-    it("accepts --indent tab for tab indentation under format", () => {
-        const r = parseArgs(["format", "--indent", "tab", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.applyOverrides.indent, "tab")
+    it("accepts --indent tab for tab indentation", () => {
+        assert.equal(parseFormat(["--indent", "tab"], G)?.applyOverrides.indent, "tab")
     })
 
     it("accepts --new-line lf and --new-line crlf", () => {
-        const r1 = parseArgs(["format", "--new-line", "lf", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r1 && !("help" in r1))
-        assert.equal(r1.applyOverrides.newLine, "lf")
-        const r2 = parseArgs(["format", "--new-line", "crlf", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r2 && !("help" in r2))
-        assert.equal(r2.applyOverrides.newLine, "crlf")
+        assert.equal(parseFormat(["--new-line", "lf"], G)?.applyOverrides.newLine, "lf")
+        assert.equal(parseFormat(["--new-line", "crlf"], G)?.applyOverrides.newLine, "crlf")
     })
 
     it("rejects --new-line cr (LS formatter cannot emit CR-only)", () => {
-        const r = quiet(() => parseArgs(["format", "--new-line", "cr", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+        assert.equal(
+            quiet(() => parseFormat(["--new-line", "cr"], G)),
+            undefined,
+        )
     })
 
     it("accepts --bracket-spacing on|off", () => {
-        const r = parseArgs(["format", "--bracket-spacing", "off", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.applyOverrides.bracketSpacing, "off")
+        assert.equal(parseFormat(["--bracket-spacing", "off"], G)?.applyOverrides.bracketSpacing, "off")
     })
 
-    it("accepts --organize-imports on|off under format", () => {
-        const r = parseArgs(["format", "--organize-imports", "off", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.command, "format")
-        assert.equal(r.applyOverrides.organizeImports, "off")
+    it("accepts --organize-imports on|off", () => {
+        assert.equal(parseFormat(["--organize-imports", "off"], G)?.applyOverrides.organizeImports, "off")
     })
 
     it("rejects bare --organize-imports without an on|off argument", () => {
-        const r = quiet(() => parseArgs(["format", "--organize-imports", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+        assert.equal(
+            quiet(() => parseFormat(["--organize-imports"], G)),
+            undefined,
+        )
     })
 
-    it("accepts --dry-run under format", () => {
-        const r = parseArgs(["format", "--dry-run", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+    it("passes the dry-run flag through from the globals", () => {
+        const r = parseFormat([], {tsconfigPath: SAMPLE_TSCONFIG, dryRun: true})
+        assert.ok(r)
         assert.equal(r.dryRun, true)
     })
 
-    it("treats --output as an unknown option under format", () => {
-        const r = quiet(() => parseArgs(["format", "--output", "prettier", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+    it("treats --output as an unknown option", () => {
+        assert.equal(
+            quiet(() => parseFormat(["--output", "prettier"], G)),
+            undefined,
+        )
     })
 })

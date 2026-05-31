@@ -1,10 +1,11 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {parseArgs} from "../parse-args.ts"
+import {parseList} from "./list-args.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../../sample/basic/tsconfig.json")
 const SAMPLE_DIR = path.dirname(SAMPLE_TSCONFIG)
+const G = {tsconfigPath: SAMPLE_TSCONFIG, dryRun: false}
 
 // Silences the expected stderr writes so the test output stays clean.
 function quiet<T>(fn: () => T): T {
@@ -17,28 +18,29 @@ function quiet<T>(fn: () => T): T {
     }
 }
 
-describe("parseArgs list", () => {
-    it("parses `list` with no filters", () => {
-        const r = parseArgs(["list", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.command, "list")
+describe("parseList", () => {
+    it("parses with no filters", () => {
+        const r = parseList([], G)
+        assert.ok(r)
         assert.deepEqual(r.listFilters, {noExports: false, noImporters: false, unusedExports: false})
     })
 
-    it("parses the `list` filter flags", () => {
-        const r = parseArgs(["list", "--no-exports", "--unused-exports", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+    it("parses the filter flags", () => {
+        const r = parseList(["--no-exports", "--unused-exports"], G)
+        assert.ok(r)
         assert.deepEqual(r.listFilters, {noExports: true, noImporters: false, unusedExports: true})
     })
 
-    it("accepts positional files under list", () => {
-        const r = parseArgs(["list", "-p", SAMPLE_TSCONFIG, "a.ts"])
-        assert.ok(r && !("help" in r))
+    it("accepts positional files", () => {
+        const r = parseList(["a.ts"], G)
+        assert.ok(r)
         assert.deepEqual(r.paths, [path.join(SAMPLE_DIR, "a.ts")])
     })
 
-    it("returns undefined on an unknown list option", () => {
-        const r = quiet(() => parseArgs(["list", "--bogus", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+    it("returns undefined on an unknown option", () => {
+        assert.equal(
+            quiet(() => parseList(["--bogus"], G)),
+            undefined,
+        )
     })
 })

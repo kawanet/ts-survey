@@ -1,10 +1,11 @@
-// Shared CLI grammar: help, tsconfig/path resolution, position-independent
-// globals, and the cross-command errors. Per-command option parsing is
-// covered in src/cli/<command>/<command>-args.test.ts.
+// Shared CLI grammar: help, the position-independent globals, subcommand
+// errors, and tsconfig/path resolution. Per-command option parsing is covered
+// in src/cli/<command>/<command>-args.test.ts.
 
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
+import {resolvePaths} from "./args-common.ts"
 import {parseArgs} from "./parse-args.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/basic/tsconfig.json")
@@ -35,13 +36,10 @@ describe("parseArgs help", () => {
     })
 })
 
-describe("parseArgs tsconfig + path resolution", () => {
-    it("defaults tsconfigPath to ./tsconfig.json when none is given", () => {
-        const r = parseArgs(["format"])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
-    })
-
+describe("parseArgs globals (position-independent)", () => {
+    // Global options (-p / --project, --dry-run) may sit on either side of
+    // the subcommand. parseArgs returns the chosen command, the raw globals,
+    // and the still-unparsed tokens to its right.
     it("accepts -p with a tsconfig.json path", () => {
         const r = parseArgs(["report", "-p", SAMPLE_TSCONFIG])
         assert.ok(r && !("help" in r))
@@ -54,28 +52,6 @@ describe("parseArgs tsconfig + path resolution", () => {
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
     })
 
-    it("treats a non-.json -p value as a directory and appends tsconfig.json", () => {
-        const r = parseArgs(["report", "-p", SAMPLE_DIR])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.tsconfigPath, path.join(SAMPLE_DIR, "tsconfig.json"))
-    })
-
-    it("treats `-p .` the same as omitting the path", () => {
-        const r = parseArgs(["report", "-p", "."])
-        assert.ok(r && !("help" in r))
-        assert.equal(r.tsconfigPath, path.resolve("tsconfig.json"))
-    })
-
-    it("resolves positional file globs against the tsconfig directory", () => {
-        const r = parseArgs(["report", "-p", SAMPLE_TSCONFIG, "src/**", "extra.ts"])
-        assert.ok(r && !("help" in r))
-        assert.deepEqual(r.paths, [path.join(SAMPLE_DIR, "src/**"), path.join(SAMPLE_DIR, "extra.ts")])
-    })
-})
-
-describe("parseArgs globals (position-independent)", () => {
-    // Global options (-p / --project, --dry-run) may sit on either side of
-    // the subcommand; the three duplicate shapes behave identically.
     it("accepts -p before the subcommand (global, left side)", () => {
         const r = parseArgs(["-p", SAMPLE_TSCONFIG, "report"])
         assert.ok(r && !("help" in r))
@@ -83,12 +59,12 @@ describe("parseArgs globals (position-independent)", () => {
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
     })
 
-    it("accepts --project before the subcommand for any command", () => {
+    it("leaves the command's own tokens in `rest` regardless of global position", () => {
         const r = parseArgs(["--project", SAMPLE_TSCONFIG, "format", "--semicolons", "off"])
         assert.ok(r && !("help" in r))
         assert.equal(r.command, "format")
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
-        assert.equal(r.applyOverrides.semicolons, "off")
+        assert.deepEqual(r.rest, ["--semicolons", "off"])
     })
 
     it("accepts --dry-run before the subcommand (left side)", () => {
@@ -130,13 +106,17 @@ describe("parseArgs globals (position-independent)", () => {
 
 describe("parseArgs subcommand errors", () => {
     it("returns undefined on an unknown command", () => {
-        const r = quiet(() => parseArgs(["frobnicate", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+        assert.equal(
+            quiet(() => parseArgs(["frobnicate", "-p", SAMPLE_TSCONFIG])),
+            undefined,
+        )
     })
 
     it("returns undefined when options are given without a subcommand", () => {
-        const r = quiet(() => parseArgs(["--output", "prettier", "-p", SAMPLE_TSCONFIG]))
-        assert.equal(r, undefined)
+        assert.equal(
+            quiet(() => parseArgs(["--output", "prettier", "-p", SAMPLE_TSCONFIG])),
+            undefined,
+        )
     })
 
     it("treats globals with no subcommand as a usage error, not help", () => {
@@ -148,5 +128,24 @@ describe("parseArgs subcommand errors", () => {
             quiet(() => parseArgs(["--dry-run"])),
             undefined,
         )
+    })
+})
+
+describe("resolvePaths", () => {
+    it("defaults to ./tsconfig.json when no path is given", () => {
+        assert.equal(resolvePaths(null, []).absTsconfig, path.resolve("tsconfig.json"))
+    })
+
+    it("treats a non-.json value as a directory and appends tsconfig.json", () => {
+        assert.equal(resolvePaths(SAMPLE_DIR, []).absTsconfig, path.join(SAMPLE_DIR, "tsconfig.json"))
+    })
+
+    it("treats `.` the same as omitting the path", () => {
+        assert.equal(resolvePaths(".", []).absTsconfig, path.resolve("tsconfig.json"))
+    })
+
+    it("resolves positional file globs against the tsconfig directory", () => {
+        const {paths} = resolvePaths(SAMPLE_TSCONFIG, ["src/**", "extra.ts"])
+        assert.deepEqual(paths, [path.join(SAMPLE_DIR, "src/**"), path.join(SAMPLE_DIR, "extra.ts")])
     })
 })

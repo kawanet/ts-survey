@@ -1,10 +1,19 @@
 // `rename`: rename an exported identifier. --from / --to are required; an
 // optional positional file scopes the lookup to that file's exports.
 
-import {applyReportNames} from "../../report/report-names.ts"
-import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+import {type CommandGlobals, resolvePaths} from "../args-common.ts"
 
-export function parseRename(sub: string[], globals: Globals): ParseArgsResult | undefined {
+export interface RenameArgs {
+    tsconfigPath: string
+    dryRun: boolean
+    from: string
+    to: string
+    // Absolute path that scopes the lookup to one file's exports, or null
+    // for a project-wide rename.
+    renameFile: string | null
+}
+
+export function parseRename(sub: string[], globals: CommandGlobals): RenameArgs | undefined {
     let from: string | undefined
     let to: string | undefined
     const files: string[] = []
@@ -41,6 +50,5 @@ export function parseRename(sub: string[], globals: Globals): ParseArgsResult | 
     }
 
     const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
-    // rename surveys the project to drive its post-rename organizeImports.
-    return {command: "rename", from, to, renameFile: paths[0] ?? null, reportNames: [...applyReportNames], output: null, applyOverrides: {}, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths: []}
+    return {tsconfigPath: absTsconfig, dryRun: globals.dryRun, from, to, renameFile: paths[0] ?? null}
 }

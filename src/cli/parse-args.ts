@@ -1,25 +1,18 @@
-// argv → ParsedArgs. Subcommand grammar (git-style):
+// argv → CommonArgs. Subcommand grammar (git-style):
 //   ts-refine [global...] <command> [command args...] [global...]
 //
 // Global options may appear on either side of the subcommand:
 //   -p / --project <path>   shared by every command
-//   --dry-run               applies to the write commands (format, move)
+//   --dry-run               applies to the write commands (format, move, rename)
 //   -h / --help             shown anywhere
 // Command-specific options (--output, --semicolons, --no-exports, report /
 // inspector selectors, ...) stay to the RIGHT of the subcommand.
 //
-// This file is the orchestrator: it pulls the globals out, validates the
-// subcommand, then dispatches to the per-command parser in
-// src/cli/<command>/<command>-args.ts. Any non-dash argument after the
-// subcommand is a file path; selector validation stays in the runner.
+// Like `git`, this common pass only resolves the globals and the subcommand;
+// it hands the leftover tokens (`rest`) to the per-command parser in
+// src/cli/<command>/<command>-args.ts, which the CLI dispatches to.
 
 import {type Command, COMMANDS, extractGlobals, type ParseArgsResult} from "./args-common.ts"
-import {parseFormat} from "./format/format-args.ts"
-import {parseInspect} from "./inspect/inspect-args.ts"
-import {parseList} from "./list/list-args.ts"
-import {parseMove} from "./move/move-args.ts"
-import {parseRename} from "./rename/rename-args.ts"
-import {parseReport} from "./report/report-args.ts"
 
 // The accepted-subcommand list for error messages, derived from COMMANDS
 // (plus `help`) so adding a subcommand only touches that array. The exact
@@ -59,18 +52,5 @@ export function parseArgs(argv: string[]): ParseArgsResult | undefined {
         return undefined
     }
 
-    switch (command as Command) {
-        case "report":
-            return parseReport(sub, globals)
-        case "format":
-            return parseFormat(sub, globals)
-        case "list":
-            return parseList(sub, globals)
-        case "inspect":
-            return parseInspect(sub, globals)
-        case "move":
-            return parseMove(sub, globals)
-        case "rename":
-            return parseRename(sub, globals)
-    }
+    return {command: command as Command, tsconfigPath: globals.tsconfigPath, dryRun: globals.dryRun, rest: sub}
 }
