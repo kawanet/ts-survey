@@ -3,8 +3,9 @@
 // Named reports and `--output` paths skip those survey-only blocks.
 
 import {initProject, refineList, refineReport, type TSR} from "../../index.ts"
-import {type CommandGlobals, resolvePaths} from "../args-common.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import type {CLIStream} from "../cli-io.ts"
+import {resolvePaths} from "../resolve-paths.ts"
 import {filterListEntries, writeListTable} from "../list/format-list.ts"
 import {parseReport} from "./report-args.ts"
 import {writePrettierMarkdown} from "./output-prettier.ts"

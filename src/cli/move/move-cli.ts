@@ -4,8 +4,9 @@
 
 import {initProject, refineMove, refineReport, type TSR} from "../../index.ts"
 import {applyReportNames} from "../../report/report-names.ts"
-import {type CommandGlobals, resolvePaths} from "../args-common.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import {NULL_SINK} from "../cli-io.ts"
+import {resolvePaths} from "../resolve-paths.ts"
 import {parseMove} from "./move-args.ts"
 
 export async function runMove(sub: string[], globals: CommandGlobals): Promise<number> {

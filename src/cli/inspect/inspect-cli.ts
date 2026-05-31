@@ -2,8 +2,9 @@
 // analysis to stdout.
 
 import {initProject, refineInspect, type TSR} from "../../index.ts"
-import {type CommandGlobals, resolvePaths} from "../args-common.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import type {CLIStream} from "../cli-io.ts"
+import {resolvePaths} from "../resolve-paths.ts"
 import {writeInspectFile} from "./format-inspect.ts"
 import {parseInspect} from "./inspect-args.ts"
 

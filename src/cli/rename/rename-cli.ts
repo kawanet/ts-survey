@@ -3,8 +3,9 @@
 
 import {initProject, refineRename, refineReport, type TSR} from "../../index.ts"
 import {applyReportNames} from "../../report/report-names.ts"
-import {type CommandGlobals, resolvePaths} from "../args-common.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import {NULL_SINK} from "../cli-io.ts"
+import {resolvePaths} from "../resolve-paths.ts"
 import {parseRename} from "./rename-args.ts"
 
 export async function runRename(sub: string[], globals: CommandGlobals): Promise<number> {

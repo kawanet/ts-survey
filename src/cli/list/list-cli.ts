@@ -2,8 +2,9 @@
 // table to stdout.
 
 import {initProject, refineList} from "../../index.ts"
-import {type CommandGlobals, resolvePaths} from "../args-common.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import type {CLIStream} from "../cli-io.ts"
+import {resolvePaths} from "../resolve-paths.ts"
 import {filterListEntries, writeListTable} from "./format-list.ts"
 import {parseList} from "./list-args.ts"
 
