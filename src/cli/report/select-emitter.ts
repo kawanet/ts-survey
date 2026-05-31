@@ -1,8 +1,8 @@
-// `--output` router. Owns the output-name registry and decides what
+// `--emit` router. Owns the emit-name registry and decides what
 // post-processing each output performs over a ReportResult. Mirrors
 // the refineReport router (which owns report-name validation): the CLI
 // hands off a raw string and the dispatcher validates + dispatches, so a
-// new output slots in by extending `outputNames` and adding a branch.
+// new output slots in by extending `emitNames` and adding a branch.
 //
 // A null name means "no output selected"; the Markdown report stream is
 // untouched and `finalize` is a no-op. A selecting output ("prettier")
@@ -10,27 +10,24 @@
 // into the rendered output.
 
 import type {TSR} from "ts-refine"
-import {writePrettierConfig} from "./output-prettier.ts"
-import {writeFormatCommand} from "./output-ts-refine.ts"
+import {writePrettierConfig} from "./emit-prettier.ts"
+import {writeFormatCommand} from "./emit-ts-refine.ts"
 
-// Local alias for readability — not exported.
-type Writer = TSR.ReportOpts["stream"]
+export const emitNames = ["prettier", "ts-refine"] as const
 
-export const outputNames = ["prettier", "ts-refine"] as const
-
-interface OutputDispatch {
-    reportStream: Writer
+interface EmitterDispatch {
+    reportStream: TSR.Writer
     finalize: (report: TSR.ReportResult) => void
 }
 
-const NULL_SINK: Writer = {write: () => {}}
+const NULL_SINK: TSR.Writer = {write: () => {}}
 
-export function selectOutput(name: string | null, stdout: Writer): OutputDispatch {
+export function selectEmitter(name: string | null, stdout: TSR.Writer): EmitterDispatch {
     if (name === null) {
         return {reportStream: stdout, finalize: () => {}}
     }
-    if (!(outputNames as readonly string[]).includes(name)) {
-        throw new Error(`unknown --output: ${name} (known: ${outputNames.join(", ")})`)
+    if (!(emitNames as readonly string[]).includes(name)) {
+        throw new Error(`unknown --emit: ${name} (known: ${emitNames.join(", ")})`)
     }
     if (name === "prettier") {
         return {
@@ -44,6 +41,6 @@ export function selectOutput(name: string | null, stdout: Writer): OutputDispatc
             finalize: (report) => writeFormatCommand(report, stdout),
         }
     }
-    // outputNames is exhaustive — this guards future entries that forget to add a branch.
-    throw new Error(`unhandled --output: ${name}`)
+    // emitNames is exhaustive — this guards future entries that forget to add a branch.
+    throw new Error(`unhandled --emit: ${name}`)
 }

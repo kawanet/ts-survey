@@ -1,7 +1,7 @@
 // Renders a ReportResult as the JSON body of a .prettierrc file.
 // Only the fields the prettier CLI itself understands are emitted; the
 // caller decides what stream to write to (process.stdout for
-// `report --output prettier`, an in-memory sink for tests, etc.).
+// `report --emit prettier`, an in-memory sink for tests, etc.).
 //
 // Mapping:
 //   semicolons.semicolons === "on"          → semi: true
@@ -19,12 +19,8 @@
 import type {Options as PrettierOptions} from "prettier"
 import type {TSR} from "ts-refine"
 
-// Local alias derived from the published shape — not exported, kept
-// solely to keep the signatures below readable.
-type Writer = TSR.ReportOpts["stream"]
-
 // Collects the recommendations that fired into a PrettierOptions object.
-// Shared by the raw --output prettier output and the .prettierrc fence
+// Shared by the raw --emit prettier output and the .prettierrc fence
 // embedded in the default Markdown survey.
 function buildPrettierOptions(report: TSR.ReportResult): PrettierOptions {
     const opts: PrettierOptions = {}
@@ -42,21 +38,21 @@ function buildPrettierOptions(report: TSR.ReportResult): PrettierOptions {
     return opts
 }
 
-export function writePrettierConfig(report: TSR.ReportResult, stream: Writer): void {
-    stream.write(JSON.stringify(buildPrettierOptions(report), null, 4) + "\n")
+export function writePrettierConfig(report: TSR.ReportResult, output: TSR.Writer): void {
+    output.write(JSON.stringify(buildPrettierOptions(report), null, 4) + "\n")
 }
 
 // The `.prettierrc` fence appended at the end of the default-survey
 // Markdown output. The whole block is skipped when no recommendations
 // fired — an empty `{}` block would be pure noise. The trailing blank
 // line matches the convention every other report block follows.
-export function writePrettierMarkdown(report: TSR.ReportResult, stream: Writer): void {
+export function writePrettierMarkdown(report: TSR.ReportResult, output: TSR.Writer): void {
     const opts = buildPrettierOptions(report)
     if (Object.keys(opts).length === 0) return
-    stream.write("### .prettierrc\n")
-    stream.write("\n")
-    stream.write("```json\n")
-    stream.write(JSON.stringify(opts, null, 4) + "\n")
-    stream.write("```\n")
-    stream.write("\n")
+    output.write("### .prettierrc\n")
+    output.write("\n")
+    output.write("```json\n")
+    output.write(JSON.stringify(opts, null, 4) + "\n")
+    output.write("```\n")
+    output.write("\n")
 }

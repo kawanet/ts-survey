@@ -1,6 +1,6 @@
 import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
-import {writeFormatCommand, writeFormatMarkdown} from "./output-ts-refine.ts"
+import {writeFormatCommand, writeFormatMarkdown} from "./emit-ts-refine.ts"
 
 function capture(fn: (s: {write: (chunk: string) => void}) => void): string {
     let out = ""
@@ -56,7 +56,7 @@ describe("writeFormatCommand", () => {
     })
 
     it("emits a bare `ts-refine format` when nothing was recommended", () => {
-        // Symmetric with `--output prettier` emitting an empty `{}` for the same case.
+        // Symmetric with `--emit prettier` emitting an empty `{}` for the same case.
         const out = capture((s) => writeFormatCommand({}, s))
         assert.equal(out, "ts-refine format\n")
     })

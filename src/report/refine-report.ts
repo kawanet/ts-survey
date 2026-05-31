@@ -4,7 +4,7 @@
 // Each report function returns the action params its recommendation
 // would drive (or an empty partial when nothing strict was found); the
 // router merges those into a single ReportResult so a caller can
-// chain them into action calls (or render them via report --output).
+// chain them into action calls (or render them via report --emit).
 
 import type * as declared from "ts-refine"
 import type {TSR} from "ts-refine"
@@ -17,7 +17,7 @@ import {runReportSemicolons} from "./semicolons.ts"
 import type {ReportOpts} from "./types.ts"
 
 export const refineReport: typeof declared.refineReport = async (project, opts) => {
-    const {stream, reportNames: requested, paths, log} = opts
+    const {output, reportNames: requested, paths, log} = opts
 
     // Validate every requested name up-front so a typo fails before any
     // report runs. `reportNames` is the source of truth for what exists.
@@ -28,7 +28,7 @@ export const refineReport: typeof declared.refineReport = async (project, opts) 
     }
 
     const report: TSR.ReportResult = {}
-    const reportOpts: ReportOpts = {stream, paths, log}
+    const reportOpts: ReportOpts = {output, paths, log}
 
     if (requested.includes("semicolons")) {
         report.semicolons = await runReportSemicolons(project, reportOpts)

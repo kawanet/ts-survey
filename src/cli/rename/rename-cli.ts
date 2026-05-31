@@ -3,11 +3,11 @@
 
 import {initProject, refineRename, refineReport, type TSR} from "../../index.ts"
 import {applyReportNames} from "../../report/report-names.ts"
-import {type Context, NULL_SINK} from "../cli-io.ts"
+import {type CLI, NULL_SINK} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseRenameArgs} from "./parse-rename-args.ts"
 
-export async function runRename(ctx: Context): Promise<number> {
+export const renameCLI: CLI = async (ctx) => {
     const {args: common, tokens, log} = ctx
     const args = parseRenameArgs(tokens, common)
     if (!args) return 1
@@ -15,7 +15,7 @@ export async function runRename(ctx: Context): Promise<number> {
     const {absTsconfig, paths} = resolvePaths(common.tsconfigPath, args.paths)
     const project = initProject({tsConfigFilePath: absTsconfig})
     const reportNames = applyReportNames as TSR.ReportName[]
-    const report = await refineReport(project, {paths: [], reportNames, stream: NULL_SINK, log})
+    const report = await refineReport(project, {paths: [], reportNames, output: NULL_SINK, log})
     await refineRename(project, {from: args.from, to: args.to, file: paths[0] ?? null, dryRun: common.dryRun, report, log})
     return 0
 }

@@ -4,11 +4,11 @@
 
 import {initProject, refineFormat, refineReport} from "../../index.ts"
 import {reportNamesForFormat} from "../../recommend/format-options.ts"
-import {type Context, NULL_SINK} from "../cli-io.ts"
+import {type CLI, NULL_SINK} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseFormatArgs} from "./parse-format-args.ts"
 
-export async function runFormat(ctx: Context): Promise<number> {
+export const formatCLI: CLI = async (ctx) => {
     const {args: common, tokens, log} = ctx
     const args = parseFormatArgs(tokens, common)
     if (!args) return 1
@@ -18,7 +18,7 @@ export async function runFormat(ctx: Context): Promise<number> {
     // Skip surveying any field the CLI already pinned; a fully-pinned run
     // makes this an empty set and refineReport does no work.
     const reportNames = reportNamesForFormat(args.applyOverrides)
-    const report = await refineReport(project, {paths, reportNames, stream: NULL_SINK, log})
+    const report = await refineReport(project, {paths, reportNames, output: NULL_SINK, log})
     // `--check` reports without writing, so it forces dry-run; the per-file
     // list and summary are already on the log, so only the fix hint is added.
     const dryRun = common.dryRun || args.check
