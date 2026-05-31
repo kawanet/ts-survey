@@ -36,9 +36,6 @@ const COMMAND_TABLE = new Map<string, CommandHandler>([
     ["rename", runRename],
 ])
 
-// Write commands accept --dry-run; the rest reject it as a likely mistake.
-const DRY_RUN_COMMANDS: ReadonlySet<string> = new Set(["format", "move", "rename"])
-
 function acceptedSubcommands(): string {
     return [...COMMAND_TABLE.keys(), "help"].join(", ")
 }
@@ -49,42 +46,54 @@ function acceptedSubcommands(): string {
 type refineCLI = (args: string[], stream: CLIStream) => Promise<number>
 
 export const refineCLI: refineCLI = async (args, stream) => {
-    const parsed = parseArgs(args)
-
-    // parseArgs returns undefined for argv errors (stderr already written),
-    // {help} for the help command, or CommonArgs for normal dispatch.
-    if (parsed === undefined) {
-        console.error(usage())
-        return 1
-    }
-    if ("help" in parsed) {
+    // -h / --help win wherever they appear; `help` and a bare invocation also
+    // print usage. These are the router's call, not the parser's.
+    if (args.includes("--help") || args.includes("-h")) {
         stream.write(usage() + "\n")
         return 0
     }
 
-    const handler = COMMAND_TABLE.get(parsed.command)
+    const parsed = parseArgs(args)
+    if (parsed === undefined) {
+        // A global option was malformed; stderr already explains it.
+        console.error(usage())
+        return 1
+    }
+
+    const {command, rest, tsconfigPath, dryRun} = parsed
+    if (command === undefined) {
+        // Bare invocation is help; globals with no subcommand is a usage error.
+        if (tsconfigPath !== null || dryRun) {
+            console.error(`expected a subcommand: ${acceptedSubcommands()}`)
+            console.error(usage())
+            return 1
+        }
+        stream.write(usage() + "\n")
+        return 0
+    }
+    if (command === "help") {
+        stream.write(usage() + "\n")
+        return 0
+    }
+
+    const handler = COMMAND_TABLE.get(command)
     if (handler === undefined) {
         // A leading dash means the user gave an option where the subcommand
         // belongs; otherwise it's just an unrecognized command name.
-        if (parsed.command.startsWith("-")) {
+        if (command.startsWith("-")) {
             console.error(`expected a subcommand: ${acceptedSubcommands()}`)
         } else {
-            console.error(`unknown command: ${parsed.command} (expected: ${acceptedSubcommands()})`)
+            console.error(`unknown command: ${command} (expected: ${acceptedSubcommands()})`)
         }
         console.error(usage())
         return 1
     }
 
-    // --dry-run only means something for the write commands.
-    if (parsed.dryRun && !DRY_RUN_COMMANDS.has(parsed.command)) {
-        console.error("--dry-run is only valid with format, move, or rename")
-        return 1
-    }
-
     // Library throws (missing tsconfig, unknown report name) become a clean
-    // non-zero status rather than an unhandled rejection.
+    // non-zero status rather than an unhandled rejection. Whether --dry-run is
+    // allowed is each command's own call, not decided here.
     try {
-        return await handler(parsed.rest, parsed, stream)
+        return await handler(rest, {tsconfigPath, dryRun}, stream)
     } catch (e) {
         console.error(e instanceof Error ? e.message : String(e))
         return 1

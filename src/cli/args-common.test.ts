@@ -1,6 +1,7 @@
-// Shared CLI grammar: help, the position-independent globals, subcommand
-// errors, and tsconfig/path resolution. Per-command option parsing is covered
-// in src/cli/<command>/<command>-args.test.ts.
+// Shared CLI grammar: the position-independent globals, the raw command split,
+// and tsconfig/path resolution. Help, validity, and dispatch are the router's
+// job (see refine-cli.test.ts); per-command option parsing lives in
+// src/cli/<command>/<command>-args.test.ts.
 
 import {strict as assert} from "node:assert"
 import path from "node:path"
@@ -22,54 +23,40 @@ function quiet<T>(fn: () => T): T {
     }
 }
 
-describe("parseArgs help", () => {
-    it("returns {help: true} on help, -h, --help, and no args", () => {
-        assert.deepEqual(parseArgs(["help"]), {help: true})
-        assert.deepEqual(parseArgs(["--help"]), {help: true})
-        assert.deepEqual(parseArgs(["-h"]), {help: true})
-        assert.deepEqual(parseArgs([]), {help: true})
-    })
-
-    it("treats -h / --help as help even after a subcommand", () => {
-        assert.deepEqual(parseArgs(["report", "--help"]), {help: true})
-        assert.deepEqual(parseArgs(["format", "-h"]), {help: true})
-    })
-})
-
 describe("parseArgs globals (position-independent)", () => {
     // Global options (-p / --project, --dry-run) may sit on either side of
-    // the subcommand. parseArgs returns the chosen command, the raw globals,
+    // the subcommand. parseArgs returns the leading token, the raw globals,
     // and the still-unparsed tokens to its right.
     it("accepts -p with a tsconfig.json path", () => {
         const r = parseArgs(["report", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
     })
 
     it("accepts --project as the long form of -p", () => {
         const r = parseArgs(["report", "--project", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
     })
 
     it("accepts -p before the subcommand (global, left side)", () => {
         const r = parseArgs(["-p", SAMPLE_TSCONFIG, "report"])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.command, "report")
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
     })
 
     it("leaves the command's own tokens in `rest` regardless of global position", () => {
         const r = parseArgs(["--project", SAMPLE_TSCONFIG, "format", "--semicolons", "off"])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.command, "format")
         assert.equal(r.tsconfigPath, SAMPLE_TSCONFIG)
         assert.deepEqual(r.rest, ["--semicolons", "off"])
     })
 
-    it("accepts --dry-run before the subcommand (left side)", () => {
+    it("records --dry-run from either side without judging whether it applies", () => {
         const r = parseArgs(["--dry-run", "format", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.command, "format")
         assert.equal(r.dryRun, true)
     })
@@ -93,30 +80,25 @@ describe("parseArgs globals (position-independent)", () => {
     })
 })
 
-describe("parseArgs subcommand handling", () => {
-    it("passes an unrecognized subcommand through verbatim (validity is the table's job)", () => {
+describe("parseArgs subcommand split", () => {
+    it("passes an unrecognized subcommand through verbatim (validity is the router's job)", () => {
         const r = parseArgs(["frobnicate", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.command, "frobnicate")
     })
 
-    it("treats a leading-dash token where the subcommand belongs as the command verbatim", () => {
-        // refineCLI turns this into an "expected a subcommand" error.
+    it("passes a leading-dash token through verbatim", () => {
+        // The router turns this into an "expected a subcommand" error.
         const r = parseArgs(["--output", "prettier", "-p", SAMPLE_TSCONFIG])
-        assert.ok(r && !("help" in r))
+        assert.ok(r)
         assert.equal(r.command, "--output")
         assert.deepEqual(r.rest, ["prettier"])
     })
 
-    it("treats globals with no subcommand as a usage error, not help", () => {
-        assert.equal(
-            quiet(() => parseArgs(["-p", SAMPLE_TSCONFIG])),
-            undefined,
-        )
-        assert.equal(
-            quiet(() => parseArgs(["--dry-run"])),
-            undefined,
-        )
+    it("reports command undefined when no subcommand is given", () => {
+        const r = parseArgs(["-p", SAMPLE_TSCONFIG])
+        assert.ok(r)
+        assert.equal(r.command, undefined)
     })
 })
 

@@ -18,6 +18,12 @@ export interface ListArgs {
 }
 
 export function parseList(sub: string[], globals: CommandGlobals): ListArgs | undefined {
+    // list is read-only; --dry-run is a write-command flag.
+    if (globals.dryRun) {
+        console.error("--dry-run is not valid for the list command")
+        return undefined
+    }
+
     const paths: string[] = []
     let noExports = false
     let noImporters = false

@@ -14,6 +14,12 @@ export interface InspectArgs {
 }
 
 export function parseInspect(sub: string[], globals: CommandGlobals): InspectArgs | undefined {
+    // inspect is read-only; --dry-run is a write-command flag.
+    if (globals.dryRun) {
+        console.error("--dry-run is not valid for the inspect command")
+        return undefined
+    }
+
     const inspectorNames: string[] = []
     const paths: string[] = []
 

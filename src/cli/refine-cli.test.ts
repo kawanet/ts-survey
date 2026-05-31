@@ -105,8 +105,25 @@ describe("refineCLI", () => {
         assert.match(r.stderr, /unknown command/)
     })
 
+    it("treats -h / --help as help even after a subcommand", async () => {
+        for (const args of [
+            ["report", "--help"],
+            ["format", "-h"],
+        ]) {
+            const r = await run(args)
+            assert.equal(r.status, 0, `args: ${args.join(" ")}`)
+            assert.match(r.stdout, /Usage: ts-refine <command>/)
+        }
+    })
+
     it("reports `expected a subcommand` when an option sits where the command belongs", async () => {
         const r = await run(["--output", "prettier", "-p", SAMPLE])
+        assert.notEqual(r.status, 0)
+        assert.match(r.stderr, /expected a subcommand/)
+    })
+
+    it("treats globals with no subcommand as a usage error, not help", async () => {
+        const r = await run(["-p", SAMPLE])
         assert.notEqual(r.status, 0)
         assert.match(r.stderr, /expected a subcommand/)
     })
@@ -114,9 +131,9 @@ describe("refineCLI", () => {
     it("rejects --dry-run on a read command, wherever it sits", async () => {
         const r1 = await run(["report", "--dry-run", "-p", SAMPLE])
         assert.notEqual(r1.status, 0)
-        assert.match(r1.stderr, /--dry-run is only valid with format, move, or rename/)
+        assert.match(r1.stderr, /--dry-run is not valid for the report command/)
         const r2 = await run(["--dry-run", "report", "-p", SAMPLE])
         assert.notEqual(r2.status, 0)
-        assert.match(r2.stderr, /--dry-run is only valid with format, move, or rename/)
+        assert.match(r2.stderr, /--dry-run is not valid for the report command/)
     })
 })

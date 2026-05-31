@@ -5,21 +5,15 @@
 
 import path from "node:path"
 
-// Result of the common pass: the chosen subcommand verbatim (validated against
-// the command table by the caller, not here), the globals, and the still-
-// unparsed tokens to its right. The per-command parser consumes `rest`.
+// Result of the common pass: the leading token verbatim (the router decides
+// whether it names a real command, help, or nothing), the globals, and the
+// still-unparsed tokens to its right. The per-command parser consumes `rest`.
 export interface CommonArgs {
-    command: string
+    command: string | undefined
     tsconfigPath: string | null
     dryRun: boolean
     rest: string[]
 }
-
-export interface HelpRequested {
-    help: true
-}
-
-export type ParseArgsResult = CommonArgs | HelpRequested
 
 // Global options collected position-independently, plus the leftover tokens
 // (the subcommand and its own arguments, in order).

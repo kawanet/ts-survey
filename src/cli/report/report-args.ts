@@ -20,6 +20,12 @@ export interface ReportArgs {
 }
 
 export function parseReport(sub: string[], globals: CommandGlobals): ReportArgs | undefined {
+    // report is read-only; --dry-run is a write-command flag.
+    if (globals.dryRun) {
+        console.error("--dry-run is not valid for the report command")
+        return undefined
+    }
+
     const reportNames: string[] = []
     const paths: string[] = []
     let output: string | null = null
