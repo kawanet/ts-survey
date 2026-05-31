@@ -39,9 +39,9 @@ export const refineList: typeof declared.refineList = async (project, {paths, lo
             }
         }
 
-        // Importers = other in-project files that reference this one. Skip
-        // .d.ts referrers to match the file scope used everywhere else.
-        const importers = sf.getReferencingSourceFiles().filter((r) => r !== sf).length
+        // Importers = other in-project files (including .d.ts) that reference
+        // this one. External declarations are not project files, so drop them.
+        const importers = sf.getReferencingSourceFiles().filter((r) => r !== sf && !r.isFromExternalLibrary()).length
 
         entries.push({file: displayPath(sf.getFilePath()), exports, unused, importers})
     }
