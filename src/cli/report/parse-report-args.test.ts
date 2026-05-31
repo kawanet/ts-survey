@@ -20,7 +20,7 @@ describe("parseReport", () => {
         assert.deepEqual(r.reportNames, ["typo-name"])
     })
 
-    it("passes unknown --emit names through without rejecting (selectOutput validates)", () => {
+    it("passes unknown --emit names through without rejecting (selectEmitter validates)", () => {
         const r = parseReportArgs(["--emit", "typo-format"], common())
         assert.ok(r)
         assert.equal(r.emit, "typo-format")
