@@ -1,0 +1,69 @@
+// `format`: a fixed set of override options plus positional files.
+
+import {applyReportNames} from "../../report/report-names.ts"
+import type {FormatOptions} from "../../recommend/format-options.ts"
+import {type Globals, type ParseArgsResult, resolvePaths} from "../args-common.ts"
+
+export function parseFormat(sub: string[], globals: Globals): ParseArgsResult | undefined {
+    const overrides: FormatOptions = {}
+    const files: string[] = []
+
+    for (let i = 0; i < sub.length; i++) {
+        const a = sub[i]
+        if (a === "--organize-imports") {
+            const v = sub[++i]
+            if (v !== "on" && v !== "off") {
+                console.error(`--organize-imports expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
+                return undefined
+            }
+            overrides.organizeImports = v
+        } else if (a === "--semicolons") {
+            const v = sub[++i]
+            if (v !== "on" && v !== "off") {
+                console.error(`--semicolons expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
+                return undefined
+            }
+            overrides.semicolons = v
+        } else if (a === "--indent") {
+            const v = sub[++i]
+            if (!v || v.startsWith("-")) {
+                console.error("--indent requires a positive integer or 'tab' (e.g. --indent 4)")
+                return undefined
+            }
+            // "tab" maps to tab indentation; otherwise a positive integer.
+            if (v === "tab") {
+                overrides.indent = "tab"
+            } else {
+                const n = Number(v)
+                if (!Number.isInteger(n) || n <= 0) {
+                    console.error(`--indent expects a positive integer or 'tab'; got: ${v}`)
+                    return undefined
+                }
+                overrides.indent = n
+            }
+        } else if (a === "--new-line") {
+            // `cr` rejected: LS formatter accepts \n / \r\n only.
+            const v = sub[++i]
+            if (v !== "lf" && v !== "crlf") {
+                console.error(`--new-line expects 'lf' or 'crlf'; got: ${v ?? "(missing)"}`)
+                return undefined
+            }
+            overrides.newLine = v
+        } else if (a === "--bracket-spacing") {
+            const v = sub[++i]
+            if (v !== "on" && v !== "off") {
+                console.error(`--bracket-spacing expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
+                return undefined
+            }
+            overrides.bracketSpacing = v
+        } else if (a.startsWith("-")) {
+            console.error(`unknown option: ${a}`)
+            return undefined
+        } else {
+            files.push(a)
+        }
+    }
+
+    const {absTsconfig, paths} = resolvePaths(globals.tsconfigPath, files)
+    return {command: "format", reportNames: [...applyReportNames], output: null, applyOverrides: overrides, surveyDefault: false, tsconfigPath: absTsconfig, dryRun: globals.dryRun, paths}
+}
