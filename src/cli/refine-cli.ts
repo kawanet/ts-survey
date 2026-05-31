@@ -76,14 +76,14 @@ export const refineCLI: refineCLI = async (args, stream) => {
     }
 
     const handler = command === undefined ? undefined : COMMAND_TABLE.get(command)
-    if (handler === undefined) {
-        // No subcommand (only globals) or a leading dash where the subcommand
-        // belongs both read as a missing subcommand; a real word is unknown.
-        if (command === undefined || command.startsWith("-")) {
+    if (!handler) {
+        // Only globals and no subcommand reads as "expected a subcommand";
+        // anything else — including a leading-dash token — is named back as an
+        // unknown command so the offending token is visible.
+        if (!command) {
             console.error(`expected a subcommand: ${acceptedSubcommands()}`)
         } else {
             console.error(`unknown command: ${command} (expected: ${acceptedSubcommands()})`)
-            console.error(usage())
         }
         return 1
     }

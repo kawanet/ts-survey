@@ -133,10 +133,10 @@ describe("refineCLI", () => {
         }
     })
 
-    it("reports `expected a subcommand` when an option sits where the command belongs", async () => {
+    it("names a leading-dash token back as an unknown command", async () => {
         const r = await run(["--output", "prettier", "-p", SAMPLE])
         assert.notEqual(r.status, 0)
-        assert.match(r.stderr, /expected a subcommand/)
+        assert.match(r.stderr, /unknown command: --output/)
     })
 
     it("treats globals with no subcommand as a usage error, not help", async () => {
