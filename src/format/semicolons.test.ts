@@ -28,8 +28,8 @@ function semiLineCount(text: string) {
 }
 
 // organize-imports is unrelated to these fixtures and would dirty the
-// in-memory text comparison; turn it off so the assertions stay focused
-// on semicolon handling.
+// in-memory text comparison; each call turns it off via
+// `format.organizeImports` so the assertions stay focused on semicolons.
 const SEMI_OFF = {dryRun: true, paths: [] as string[]}
 
 const log = {write: () => {}}
