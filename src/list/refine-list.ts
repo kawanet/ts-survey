@@ -1,6 +1,7 @@
-// `list`: per-file export / usage snapshot. For each file (in scope, .d.ts
-// excluded) it counts exported declarations, how many of those have no
-// external reference (unused), and how many other files import it. The
+// `list`: per-file export / usage snapshot. For each in-project file (external
+// library declarations aside, .d.ts included) it counts exported declarations,
+// how many of those have no external reference (unused), and how many other
+// files import it. The
 // full set is returned unfiltered so later commands can reuse it; the CLI
 // applies the --no-exports / --no-importers / --unused-exports filters.
 //
