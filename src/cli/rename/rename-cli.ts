@@ -1,14 +1,22 @@
 // `rename` runner: survey the project so the post-rename organizeImports
 // follows the codebase's conventions, then rename the exported identifier.
 
-import type {Project} from "ts-morph"
-import {refineRename, refineReport, type TSR} from "../../index.ts"
+import {initProject, refineRename, refineReport, type TSR} from "../../index.ts"
 import {applyReportNames} from "../../report/report-names.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import {NULL_SINK} from "../cli-io.ts"
-import type {RenameArgs} from "./rename-args.ts"
+import {usage} from "../usage.ts"
+import {parseRename} from "./rename-args.ts"
 
-export async function runRename(project: Project, args: RenameArgs): Promise<void> {
+export async function runRename(sub: string[], globals: CommandGlobals): Promise<number> {
+    const args = parseRename(sub, globals)
+    if (args === undefined) {
+        console.error(usage())
+        return 1
+    }
+    const project = initProject({tsConfigFilePath: args.tsconfigPath})
     const reportNames = applyReportNames as TSR.ReportName[]
     const report = await refineReport(project, {paths: [], reportNames, stream: NULL_SINK})
     await refineRename(project, {from: args.from, to: args.to, file: args.renameFile, dryRun: args.dryRun, report})
+    return 0
 }

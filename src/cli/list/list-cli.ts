@@ -1,13 +1,21 @@
 // `list` runner: gather the cleanup-candidate entries and write the filtered
 // table to stdout.
 
-import type {Project} from "ts-morph"
-import {refineList} from "../../index.ts"
+import {initProject, refineList} from "../../index.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import type {CLIStream} from "../cli-io.ts"
+import {usage} from "../usage.ts"
 import {filterListEntries, writeListTable} from "./format-list.ts"
-import type {ListArgs} from "./list-args.ts"
+import {parseList} from "./list-args.ts"
 
-export async function runList(project: Project, args: ListArgs, stream: CLIStream): Promise<void> {
+export async function runList(sub: string[], globals: CommandGlobals, stream: CLIStream): Promise<number> {
+    const args = parseList(sub, globals)
+    if (args === undefined) {
+        console.error(usage())
+        return 1
+    }
+    const project = initProject({tsConfigFilePath: args.tsconfigPath})
     const entries = await refineList(project, {paths: args.paths})
     writeListTable(filterListEntries(entries, args.listFilters), stream)
+    return 0
 }

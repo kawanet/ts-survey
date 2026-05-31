@@ -2,16 +2,24 @@
 // listing, then the report tables, then `## recommendation` + `### .prettierrc`.
 // Named reports and `--output` paths skip those survey-only blocks.
 
-import type {Project} from "ts-morph"
-import {refineList, refineReport, type TSR} from "../../index.ts"
+import {initProject, refineList, refineReport, type TSR} from "../../index.ts"
+import type {CommandGlobals} from "../args-common.ts"
 import type {CLIStream} from "../cli-io.ts"
 import {filterListEntries, writeListTable} from "../list/format-list.ts"
+import {usage} from "../usage.ts"
+import {parseReport} from "./report-args.ts"
 import {writePrettierMarkdown} from "./output-prettier.ts"
 import {writeFormatMarkdown} from "./output-ts-refine.ts"
-import type {ReportArgs} from "./report-args.ts"
 import {selectOutput} from "./select-output.ts"
 
-export async function runReport(project: Project, args: ReportArgs, stream: CLIStream): Promise<void> {
+export async function runReport(sub: string[], globals: CommandGlobals, stream: CLIStream): Promise<number> {
+    const args = parseReport(sub, globals)
+    if (args === undefined) {
+        console.error(usage())
+        return 1
+    }
+    const project = initProject({tsConfigFilePath: args.tsconfigPath})
+
     // Report-name validation lives in refineReport so typos surface there.
     const reportNames = args.reportNames as TSR.ReportName[]
     const output = selectOutput(args.output, stream)
@@ -28,4 +36,5 @@ export async function runReport(project: Project, args: ReportArgs, stream: CLIS
         writePrettierMarkdown(report, stream)
     }
     output.finalize(report)
+    return 0
 }
