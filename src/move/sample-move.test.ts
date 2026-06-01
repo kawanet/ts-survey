@@ -9,7 +9,7 @@ import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
+import {initTestProject} from "../test-utils/init-test-project.ts"
 import {refineMove} from "./refine-move.ts"
 
 const SAMPLE_ROOT = path.resolve(import.meta.dirname, "../../sample")
@@ -33,7 +33,7 @@ const log = {write: () => {}}
 describe("refineMove against sample fixtures (one era per sample)", () => {
     it("sample/move-ts-ext: keeps the explicit `.ts` extension", async () => {
         await withSampleCopy("move-ts-ext", async (workdir) => {
-            const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
+            const project = initTestProject(path.join(workdir, "tsconfig.json"))
             await refineMove({project, log, sources: [path.join(workdir, "src/lib.ts")], dest: path.join(workdir, "src/util/"), dryRun: false, format: {}})
             const cli = await fs.readFile(path.join(workdir, "src/cli.ts"), "utf8")
             assert.ok(cli.includes('from "./util/lib.ts"'), `cli.ts should reference ./util/lib.ts; got:\n${cli}`)
@@ -42,7 +42,7 @@ describe("refineMove against sample fixtures (one era per sample)", () => {
 
     it("sample/move-js-ext: keeps the emit-style `.js` extension", async () => {
         await withSampleCopy("move-js-ext", async (workdir) => {
-            const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
+            const project = initTestProject(path.join(workdir, "tsconfig.json"))
             await refineMove({project, log, sources: [path.join(workdir, "src/lib.ts")], dest: path.join(workdir, "src/util/"), dryRun: false, format: {}})
             const cli = await fs.readFile(path.join(workdir, "src/cli.ts"), "utf8")
             assert.ok(cli.includes('from "./util/lib.js"'), `cli.ts should reference ./util/lib.js; got:\n${cli}`)
@@ -51,7 +51,7 @@ describe("refineMove against sample fixtures (one era per sample)", () => {
 
     it("sample/move-no-ext: keeps the legacy no-extension style", async () => {
         await withSampleCopy("move-no-ext", async (workdir) => {
-            const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
+            const project = initTestProject(path.join(workdir, "tsconfig.json"))
             await refineMove({project, log, sources: [path.join(workdir, "src/lib.ts")], dest: path.join(workdir, "src/util/"), dryRun: false, format: {}})
             const cli = await fs.readFile(path.join(workdir, "src/cli.ts"), "utf8")
             assert.ok(cli.includes('from "./util/lib"'), `cli.ts should reference ./util/lib; got:\n${cli}`)

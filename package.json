@@ -37,6 +37,7 @@
     "dist/ts-refine.cli.mjs",
     "src/**/*.ts",
     "!src/**/*.test.ts",
+    "!src/test-utils/**",
     "types/*.d.ts"
   ],
   "homepage": "https://github.com/kawanet/ts-refine#readme",

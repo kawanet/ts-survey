@@ -5,6 +5,7 @@ import path from "node:path"
 import {after, before, describe, it} from "node:test"
 import {Project, ts} from "ts-morph"
 import type {TSR} from "ts-refine"
+import {initInMemoryTestProject, initTestProject} from "../test-utils/init-test-project.ts"
 import {refineMove} from "./refine-move.ts"
 
 // organizeImports after a move follows the surveyed style; these pin the
@@ -13,13 +14,10 @@ const NO_SPACE: TSR.FormatStyle = {bracketSpacing: "off"}
 const SPACED: TSR.FormatStyle = {bracketSpacing: "on"}
 
 function newProject(): Project {
-    return new Project({
-        useInMemoryFileSystem: true,
-        compilerOptions: {
-            module: ts.ModuleKind.ESNext,
-            moduleResolution: ts.ModuleResolutionKind.Bundler,
-            allowImportingTsExtensions: true,
-        } as any,
+    return initInMemoryTestProject({
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler,
+        allowImportingTsExtensions: true,
     })
 }
 
@@ -68,13 +66,10 @@ describe("refineMove (in-memory, dry-run)", () => {
     it("preserves the dynamic-import extension across the NodeNext js↔ts mapping (.mjs → .mts source)", async () => {
         // import("./a.mjs") resolves to /src/a.mts under NodeNext. The
         // restoration must put `.mjs` back, not strip to bare `./a`.
-        const project = new Project({
-            useInMemoryFileSystem: true,
-            compilerOptions: {
-                module: ts.ModuleKind.NodeNext,
-                moduleResolution: ts.ModuleResolutionKind.NodeNext,
-                allowImportingTsExtensions: true,
-            } as any,
+        const project = initInMemoryTestProject({
+            module: ts.ModuleKind.NodeNext,
+            moduleResolution: ts.ModuleResolutionKind.NodeNext,
+            allowImportingTsExtensions: true,
         })
         project.createSourceFile("/src/a.mts", "export const x = 1\n")
         const b = project.createSourceFile("/src/b.ts", 'const _ = import("./a.mjs")\n')
@@ -84,13 +79,10 @@ describe("refineMove (in-memory, dry-run)", () => {
 
     it("preserves whatever extension each importer wrote (.ts / .js / none in one file)", async () => {
         // NodeNext-style resolver — `./a.js` is a valid way to refer to a.ts.
-        const project = new Project({
-            useInMemoryFileSystem: true,
-            compilerOptions: {
-                module: ts.ModuleKind.NodeNext,
-                moduleResolution: ts.ModuleResolutionKind.NodeNext,
-                allowImportingTsExtensions: true,
-            } as any,
+        const project = initInMemoryTestProject({
+            module: ts.ModuleKind.NodeNext,
+            moduleResolution: ts.ModuleResolutionKind.NodeNext,
+            allowImportingTsExtensions: true,
         })
         project.createSourceFile("/src/a.ts", "export const x = 1\n")
         const b = project.createSourceFile("/src/b.ts", ['import {x as x1} from "./a.ts"', 'import {x as x2} from "./a.js"', 'import {x as x3} from "./a"', "const _ = x1 + x2 + x3", ""].join("\n"))
@@ -296,7 +288,7 @@ describe("refineMove (on disk)", () => {
             await fs.writeFile(path.join(sub, "src/b.ts"), 'import {x} from "./a.ts"\nconst _ = x\n')
             await fs.writeFile(path.join(sub, "src/unrelated.ts"), "export const z = 3 // ORIGINAL\n")
 
-            const project = new Project({tsConfigFilePath: path.join(sub, "tsconfig.json")})
+            const project = initTestProject(path.join(sub, "tsconfig.json"))
 
             // Caller's pending edit on a file refineMove never touches.
             project.getSourceFileOrThrow(path.join(sub, "src/unrelated.ts")).replaceWithText("export const z = 999 // CALLER EDIT\n")
@@ -316,7 +308,7 @@ describe("refineMove (on disk)", () => {
     })
 
     it("persists the move and the importer rewrite to disk", async () => {
-        const project = new Project({tsConfigFilePath: path.join(workdir, "tsconfig.json")})
+        const project = initTestProject(path.join(workdir, "tsconfig.json"))
         await refineMove({project, log, sources: [path.join(workdir, "src/a.ts")], dest: path.join(workdir, "lib/"), dryRun: false, format: NO_SPACE})
 
         // Old path is gone, new path holds the original content.

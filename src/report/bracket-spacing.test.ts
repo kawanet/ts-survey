@@ -1,7 +1,7 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
+import {initInMemoryTestProject, initTestProject} from "../test-utils/init-test-project.ts"
 import {runReportBracketSpacing} from "./bracket-spacing.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/braces-mixed/tsconfig.json")
@@ -10,7 +10,7 @@ const log = {write: () => {}}
 
 describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     it("buckets files by primary spacing style and returns the majority", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const lines: string[] = []
         const ret = await runReportBracketSpacing({project, log, output: {write: (l) => lines.push(l)}, paths: []})
 
@@ -29,7 +29,7 @@ describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     })
 
     it("skips empty `{}`, whitespace-only `{ }`, and multi-line forms", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("x.ts", ["export const a = {}", "export const b = { }", "export const c = {", "    p: 1,", "}"].join("\n"))
         const lines: string[] = []
         const ret = await runReportBracketSpacing({project, log, output: {write: (l) => lines.push(l)}, paths: []})
@@ -46,7 +46,7 @@ describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     })
 
     it("treats CR-only and CRLF multi-line objects as multi-line (not just LF)", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
 
         // CR-only line terminators (rare but supported by the new-line
         // report); the brace inner content contains no LF so a naive
@@ -60,7 +60,7 @@ describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     })
 
     it("breaks a file-count tie by the higher node count and emits a recommendation", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
 
         // tight.ts (1 file, 1 tight node) vs spaced.ts (1 file, 3 spaced nodes).
         project.createSourceFile("tight.ts", "export const a = {x: 1}\n")
@@ -72,7 +72,7 @@ describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     })
 
     it("returns no recommendation when files AND nodes tie", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("tight.ts", "export const a = {x: 1}\n")
         project.createSourceFile("spaced.ts", "export const a = { x: 1 }\n")
         const lines: string[] = []
@@ -81,7 +81,7 @@ describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     })
 
     it("counts ObjectBindingPattern (destructure) alongside ObjectLiteralExpression", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("d.ts", "export const f = ({ a, b }: {a: 1; b: 2}) => a + b\n")
         const lines: string[] = []
         const ret = await runReportBracketSpacing({project, log, output: {write: (l) => lines.push(l)}, paths: []})
@@ -93,7 +93,7 @@ describe("runReportBracketSpacing (sample/braces-mixed)", () => {
     })
 
     it("counts named bindings of import / export declarations", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
 
         // Pure re-export modules carry no object literal or destructure, but
         // the LS formatter still re-spaces `import {x}` / `export {x}` — so

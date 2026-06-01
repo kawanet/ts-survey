@@ -1,7 +1,7 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
+import {initInMemoryTestProject, initTestProject} from "../test-utils/init-test-project.ts"
 import {runReportNewLine} from "./new-line.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/newlines-mixed/tsconfig.json")
@@ -10,7 +10,7 @@ const log = {write: () => {}}
 
 describe("runReportNewLine (sample/newlines-mixed)", () => {
     it("buckets files by primary terminator and returns the majority", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const lines: string[] = []
         const ret = await runReportNewLine({project, log, output: {write: (l) => lines.push(l)}, paths: []})
 
@@ -27,7 +27,7 @@ describe("runReportNewLine (sample/newlines-mixed)", () => {
     })
 
     it("counts \\r\\n as one CRLF rather than \\r + \\n", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("x.ts", "const a = 1\r\nconst b = 2\r\n")
         const lines: string[] = []
         const ret = await runReportNewLine({project, log, output: {write: (l) => lines.push(l)}, paths: []})
@@ -39,7 +39,7 @@ describe("runReportNewLine (sample/newlines-mixed)", () => {
     })
 
     it("breaks a file-count tie by the higher terminator count and emits a recommendation", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
 
         // 1 LF file with 5 LFs vs 1 CRLF file with 1 CRLF — tied on files,
         // LF wins on terminator count.
@@ -51,7 +51,7 @@ describe("runReportNewLine (sample/newlines-mixed)", () => {
     })
 
     it("returns an empty partial when files AND terminator counts both tie", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("lf.ts", "const a = 1\n")
         project.createSourceFile("crlf.ts", "const b = 1\r\n")
         const lines: string[] = []

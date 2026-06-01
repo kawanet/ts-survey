@@ -5,7 +5,7 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
+import {initTestProject} from "../test-utils/init-test-project.ts"
 import {refineFormat} from "./refine-format.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/basic/tsconfig.json")
@@ -15,7 +15,7 @@ const log = {write: () => {}}
 
 describe("refineFormat (organize-imports path, dry-run, sample/basic)", () => {
     it("alphabetises imports in-memory without touching disk", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
 
         // Confirm the fixture starts with imports in non-canonical order so that
         // organizeImports actually has something to do.
@@ -32,7 +32,7 @@ describe("refineFormat (organize-imports path, dry-run, sample/basic)", () => {
     })
 
     it("uses braces without surrounding spaces (`{A}` style) when bracket-spacing off is in effect", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
 
         // Old action hard-coded brace-spacing off; refineFormat drives it via
         // the merged settings, so pin the override here.
