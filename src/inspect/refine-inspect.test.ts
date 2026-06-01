@@ -1,8 +1,8 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
 import type {TSR} from "ts-refine"
+import {initInMemoryTestProject, initTestProject} from "../test-utils/init-test-project.ts"
 import {refineInspect} from "./refine-inspect.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/basic/tsconfig.json")
@@ -11,7 +11,7 @@ const log = {write: () => {}}
 
 describe("refineInspect", () => {
     it("returns one InspectExport per export with importers count and alphabetical example", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const files = await refineInspect({project, log, paths: [], inspectorNames: ["exports"]})
 
         const byName = Object.fromEntries(files.map((f) => [path.basename(f.file), f]))
@@ -37,7 +37,7 @@ describe("refineInspect", () => {
     })
 
     it("scopes to the given file globs", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const dir = path.dirname(SAMPLE_TSCONFIG)
         const files = await refineInspect({project, log, paths: [path.join(dir, "src/used.ts")], inspectorNames: ["exports"]})
         assert.deepEqual(
@@ -47,15 +47,12 @@ describe("refineInspect", () => {
     })
 
     it("rejects an unknown inspector name", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         await assert.rejects(() => refineInspect({project, log, paths: [], inspectorNames: ["typo" as unknown as TSR.InspectorName]}), /unknown inspector name: typo/)
     })
 
     it("classifies each importer form (value / type / namespace / side-effect / re-export / dynamic / mixed)", async () => {
-        const project = new Project({
-            useInMemoryFileSystem: true,
-            compilerOptions: {allowImportingTsExtensions: true} as any,
-        })
+        const project = initInMemoryTestProject({allowImportingTsExtensions: true})
         project.createSourceFile("/target.ts", "export const x = 1\nexport type T = number\n")
         project.createSourceFile("/value.ts", 'import {x} from "./target.ts"\nconst _ = x\n')
         project.createSourceFile("/type.ts", 'import type {T} from "./target.ts"\nconst _: T = 1\n')
@@ -84,14 +81,14 @@ describe("refineInspect", () => {
     })
 
     it("returns an empty importers list when nothing imports the file", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("/orphan.ts", "export const x = 1\n")
         const files = await refineInspect({project, log, paths: ["/orphan.ts"], inspectorNames: ["importers"]})
         assert.deepEqual(files[0].importers, [])
     })
 
     it("counts an in-project .d.ts as an importer", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("/target.ts", "export const x = 1\n")
         project.createSourceFile("/ambient.d.ts", 'import {x} from "./target.ts"\ndeclare const _: typeof x\n')
         const files = await refineInspect({project, log, paths: ["/target.ts"], inspectorNames: ["importers"]})

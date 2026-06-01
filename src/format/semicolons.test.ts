@@ -5,6 +5,7 @@ import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
+import {initInMemoryTestProject, initTestProject} from "../test-utils/init-test-project.ts"
 import {refineFormat} from "./refine-format.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/semicolons-mixed/tsconfig.json")
@@ -36,7 +37,7 @@ const log = {write: () => {}}
 
 describe("refineFormat --semicolons off (dry-run, sample/semicolons-mixed)", () => {
     it("strips every trailing `;` from ASI-eligible statements in-memory", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         await refineFormat({project, log, ...SEMI_OFF, format: {organizeImports: "off", semicolons: "off"}})
 
         // all-semi.ts and mixed.ts must end up with no trailing `;` on const lines.
@@ -56,7 +57,7 @@ describe("refineFormat --semicolons off (dry-run, sample/semicolons-mixed)", () 
 
 describe("refineFormat --semicolons on (dry-run, sample/semicolons-mixed)", () => {
     it("appends `;` to every ASI-eligible statement lacking one", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         await refineFormat({project, log, ...SEMI_OFF, format: {organizeImports: "off", semicolons: "on"}})
 
         // no-semi.ts and mixed.ts must converge on full-`;` on const lines.
@@ -80,7 +81,7 @@ describe("refineFormat --semicolons off handles nested ASI-eligible statements",
         // with naive reverse iteration over-shifted the file. The LS
         // formatter computes a single edit set so the offset hazard is
         // structurally absent; the test still pins the visible outcome.
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("nest.ts", ["describe('outer', () => {", "  it('inner', () => {", "    const x = 1;", "    inner(x);", "  });", "});"].join("\n"))
 
         await refineFormat({project, log, ...SEMI_OFF, format: {organizeImports: "off", semicolons: "off"}})
@@ -100,7 +101,7 @@ describe("refineFormat --semicolons off keeps `;` at ASI-hazard sites", () => {
         // The LS rule isSemicolonDeletionContext is the original source the
         // self-implemented detector was modeled on; this test pins that the
         // LS path still treats `\n.toString()` as a hazard.
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile(
             "hazard.ts",
             [
@@ -129,7 +130,7 @@ describe("refineFormat --semicolons off and do-while statements", () => {
     it("removes the trailing `;` after `} while (...)` (LS divergence from the old hand-rolled action)", async () => {
         // The LS deletion-context rule does not exempt do-while; the
         // retired hand-rolled filter did. Pinned as the LS outcome.
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("do-while.ts", ["let x = 0;", "do {", "  x++", "} while (x < 2);", "const y = x;"].join("\n"))
 
         await refineFormat({project, log, ...SEMI_OFF, format: {organizeImports: "off", semicolons: "off"}})

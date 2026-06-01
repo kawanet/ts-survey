@@ -9,6 +9,7 @@ import path from "node:path"
 import {describe, it} from "node:test"
 import {Project} from "ts-morph"
 import {applyTypeOnlyFixes} from "../lib/type-only-fixes.ts"
+import {initTestProject} from "../test-utils/init-test-project.ts"
 import {refineFormat} from "./refine-format.ts"
 
 const SAMPLE = path.resolve(import.meta.dirname, "../../sample")
@@ -25,7 +26,7 @@ const log = {write: () => {}}
 
 describe("applyTypeOnlyFixes via refineFormat (verbatimModuleSyntax on)", () => {
     it("fires all three fixes end-to-end without touching disk", async () => {
-        const project = new Project({tsConfigFilePath: VERBATIM_TSCONFIG})
+        const project = initTestProject(VERBATIM_TSCONFIG)
 
         await refineFormat({project, log, dryRun: true, paths: [], format: {}})
 
@@ -50,7 +51,7 @@ describe("applyTypeOnlyFixes via refineFormat (verbatimModuleSyntax on)", () => 
 
 describe("applyTypeOnlyFixes via refineFormat (isolatedModules only)", () => {
     it("converts the export side but leaves imports (import fix needs verbatim)", async () => {
-        const project = new Project({tsConfigFilePath: ISOLATED_TSCONFIG})
+        const project = initTestProject(ISOLATED_TSCONFIG)
 
         await refineFormat({project, log, dryRun: true, paths: [], format: {}})
 
@@ -67,7 +68,7 @@ describe("applyTypeOnlyFixes via refineFormat (isolatedModules only)", () => {
 
 describe("applyTypeOnlyFixes (neither flag set)", () => {
     it("skips the bundle entirely and changes nothing", () => {
-        const project = new Project({tsConfigFilePath: BASIC_TSCONFIG})
+        const project = initTestProject(BASIC_TSCONFIG)
         for (const sf of project.getSourceFiles()) {
             const before = sf.getFullText()
             applyTypeOnlyFixes(sf, {})

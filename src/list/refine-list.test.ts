@@ -1,7 +1,7 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
+import {initInMemoryTestProject, initTestProject} from "../test-utils/init-test-project.ts"
 import {refineList} from "./refine-list.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/basic/tsconfig.json")
@@ -10,7 +10,7 @@ const log = {write: () => {}}
 
 describe("refineList (sample/basic)", () => {
     it("reports per-file export / unused / importer counts", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const entries = await refineList({project, log, paths: []})
 
         const got = Object.fromEntries(entries.map((e) => [path.basename(e.file), {exports: e.exports, unused: e.unused, importers: e.importers}]))
@@ -30,7 +30,7 @@ describe("refineList (sample/basic)", () => {
     })
 
     it("scopes to the given file globs", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const dir = path.dirname(SAMPLE_TSCONFIG)
         const entries = await refineList({project, log, paths: [path.join(dir, "src/used.ts")]})
         assert.deepEqual(
@@ -40,7 +40,7 @@ describe("refineList (sample/basic)", () => {
     })
 
     it("includes in-project .d.ts files", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("/src/a.ts", "export const x = 1\n")
         project.createSourceFile("/src/types.d.ts", 'import {x} from "./a.ts"\nexport type T = typeof x\n')
         const entries = await refineList({project, log, paths: []})

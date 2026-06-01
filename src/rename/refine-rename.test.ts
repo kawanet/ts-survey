@@ -2,6 +2,7 @@ import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
 import {Project, ts} from "ts-morph"
 import type {TSR} from "ts-refine"
+import {initInMemoryTestProject} from "../test-utils/init-test-project.ts"
 import {refineRename} from "./refine-rename.ts"
 
 // rename re-sorts the touched files' imports via organizeImports using the
@@ -9,13 +10,10 @@ import {refineRename} from "./refine-rename.ts"
 const NO_SPACE: TSR.FormatStyle = {bracketSpacing: "off"}
 
 function newProject(): Project {
-    return new Project({
-        useInMemoryFileSystem: true,
-        compilerOptions: {
-            module: ts.ModuleKind.ESNext,
-            moduleResolution: ts.ModuleResolutionKind.Bundler,
-            allowImportingTsExtensions: true,
-        } as any,
+    return initInMemoryTestProject({
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler,
+        allowImportingTsExtensions: true,
     })
 }
 

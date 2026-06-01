@@ -1,8 +1,8 @@
 import {strict as assert} from "node:assert"
 import path from "node:path"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
 import type {TSR} from "ts-refine"
+import {initTestProject} from "../test-utils/init-test-project.ts"
 import {refineReport} from "./refine-report.ts"
 
 const SAMPLE_TSCONFIG = path.resolve(import.meta.dirname, "../../sample/basic/tsconfig.json")
@@ -11,7 +11,7 @@ const log = {write: () => {}}
 
 describe("refineReport", () => {
     it("throws on an unknown report name (validation moved out of parseArgs)", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const lines: string[] = []
         await assert.rejects(
             () =>
@@ -31,7 +31,7 @@ describe("refineReport", () => {
     })
 
     it("runs requested reports in registry order regardless of input order", async () => {
-        const project = new Project({tsConfigFilePath: SAMPLE_TSCONFIG})
+        const project = initTestProject(SAMPLE_TSCONFIG)
         const lines: string[] = []
         await refineReport({
             project,

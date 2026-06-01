@@ -1,13 +1,13 @@
 import {strict as assert} from "node:assert"
 import {describe, it} from "node:test"
-import {Project} from "ts-morph"
+import {initInMemoryTestProject} from "../test-utils/init-test-project.ts"
 import {refineFormat} from "./refine-format.ts"
 
 const log = {write: () => {}}
 
 describe("refineFormat", () => {
     it("applies the indent width from the format style", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.ts", "function f() {\n  return 1\n}\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {indent: 4}})
 
@@ -16,28 +16,28 @@ describe("refineFormat", () => {
     })
 
     it("applies a pinned indent width", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.ts", "function f() {\n  return 1\n}\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {indent: 2}})
         assert.match(sf.getFullText(), /\n {2}return 1\n/)
     })
 
     it("inserts trailing semicolons when format.semicolons is 'on'", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.ts", "const a = 1\nconst b = 2\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {semicolons: "on"}})
         assert.match(sf.getFullText(), /const a = 1;\nconst b = 2;\n/)
     })
 
     it("strips trailing semicolons when format.semicolons is 'off'", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.ts", "const a = 1;\nconst b = 2;\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {semicolons: "off"}})
         assert.match(sf.getFullText(), /const a = 1\nconst b = 2\n/)
     })
 
     it("organizes imports by default", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("dep.ts", "export const used = 1\nexport const unused = 2\n")
         const sf = project.createSourceFile("a.ts", "import {unused, used} from './dep.ts'\nconst x = used\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {}})
@@ -50,7 +50,7 @@ describe("refineFormat", () => {
     })
 
     it("skips organize-imports when format.organizeImports is 'off'", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("dep.ts", "export const used = 1\nexport const unused = 2\n")
         const sf = project.createSourceFile("a.ts", "import {unused, used} from './dep.ts'\nconst x = used\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {organizeImports: "off"}})
@@ -60,7 +60,7 @@ describe("refineFormat", () => {
     })
 
     it("organizes imports but skips other formatting when organizeImports is 'only'", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         project.createSourceFile("dep.ts", "export const a = 1\nexport const b = 2\n")
         const sf = project.createSourceFile("a.ts", "import {b, a} from './dep.ts'\nconst   x = a+b\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {organizeImports: "only", semicolons: "on"}})
@@ -74,7 +74,7 @@ describe("refineFormat", () => {
     })
 
     it("formats .d.ts files too (no longer excluded)", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.d.ts", "interface I { x:number }\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {bracketSpacing: "on"}})
 
@@ -83,7 +83,7 @@ describe("refineFormat", () => {
     })
 
     it("dryRun does not call fs.writeFile (verified by using an in-memory project that would error on real-fs writes)", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.ts", "const a = 1\n")
         await refineFormat({project, log, dryRun: true, paths: [], format: {semicolons: "on"}})
 
@@ -92,7 +92,7 @@ describe("refineFormat", () => {
     })
 
     it("returns the touched files, and an empty list when nothing changes", async () => {
-        const project = new Project({useInMemoryFileSystem: true})
+        const project = initInMemoryTestProject()
         const sf = project.createSourceFile("a.ts", "const a = 1\n")
         const changed = await refineFormat({project, log, dryRun: true, paths: [], format: {semicolons: "on"}})
         assert.deepEqual(changed.touched, [sf.getFilePath()])
