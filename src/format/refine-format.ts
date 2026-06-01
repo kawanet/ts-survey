@@ -27,7 +27,9 @@ export const refineFormat: typeof declared.refineFormat = async (opts) => {
         const filePath = sf.getFilePath()
         const before = sf.getFullText()
 
-        sf.formatText(resolved.formatSettings)
+        // `only` leaves the surrounding text to another formatter and runs just
+        // the organize pass below.
+        if (!resolved.organizeImportsOnly) sf.formatText(resolved.formatSettings)
         // Same settings handed in so the rebuilt import block doesn't
         // drift from the just-formatted surrounding file.
         if (resolved.organizeImports) {
@@ -41,7 +43,7 @@ export const refineFormat: typeof declared.refineFormat = async (opts) => {
         // terminators are normalized here. Push the result back into the
         // SourceFile so in-memory state matches what gets written.
         let after = sf.getFullText()
-        if (resolved.newLineNormalize !== undefined) {
+        if (!resolved.organizeImportsOnly && resolved.newLineNormalize !== undefined) {
             const normalized = normalizeNewLines(after, resolved.newLineNormalize)
             if (normalized !== after) {
                 sf.replaceWithText(normalized)

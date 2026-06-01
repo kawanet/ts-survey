@@ -56,6 +56,18 @@ describe("refineFormat", () => {
         assert.match(sf.getFullText(), /unused/)
     })
 
+    it("organizes imports but skips other formatting when organizeImports is 'only'", async () => {
+        const project = new Project({useInMemoryFileSystem: true})
+        project.createSourceFile("dep.ts", "export const a = 1\nexport const b = 2\n")
+        const sf = project.createSourceFile("a.ts", "import {b, a} from './dep.ts'\nconst   x = a+b\n")
+        await refineFormat({project, log, dryRun: true, paths: [], format: {organizeImports: "only", semicolons: "on"}})
+        const text = sf.getFullText()
+        // imports are sorted...
+        assert.match(text, /a, b/)
+        // ...but formatText is skipped: the body keeps its odd spacing and no `;`.
+        assert.match(text, /const {3}x = a\+b\n/)
+    })
+
     it("formats .d.ts files too (no longer excluded)", async () => {
         const project = new Project({useInMemoryFileSystem: true})
         const sf = project.createSourceFile("a.d.ts", "interface I { x:number }\n")

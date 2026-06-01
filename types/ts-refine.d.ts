@@ -72,7 +72,9 @@ export declare namespace TSR {
     // recommendation is neither a runnable flag nor an LS setting, so it never
     // enters here. refineMove/refineRename take this directly to organize imports.
     interface FormatStyle {
-        organizeImports?: "on" | "off"
+        // "only" organizes imports without reformatting anything else — for
+        // projects that leave the rest of formatting to (say) prettier.
+        organizeImports?: "on" | "off" | "only"
         indent?: number | "tab"
         semicolons?: "on" | "off"
         newLine?: "lf" | "crlf"
