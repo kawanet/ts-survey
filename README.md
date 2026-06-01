@@ -156,6 +156,9 @@ npx ts-refine format --bracket-spacing off
 
 # skip organizing imports (on by default)
 npx ts-refine format --organize-imports off
+
+# organize imports only, leaving the rest of formatting to another tool
+npx ts-refine format --organize-imports only
 ```
 
 Organizing imports sorts and combines declarations and drops unused ones. Under

@@ -71,8 +71,9 @@ describe("parseFormat", () => {
         assert.equal(parseFormatArgs(["--bracket-spacing", "off"], common())?.applyOverrides.bracketSpacing, "off")
     })
 
-    it("accepts --organize-imports on|off", () => {
+    it("accepts --organize-imports on|off|only", () => {
         assert.equal(parseFormatArgs(["--organize-imports", "off"], common())?.applyOverrides.organizeImports, "off")
+        assert.equal(parseFormatArgs(["--organize-imports", "only"], common())?.applyOverrides.organizeImports, "only")
     })
 
     it("rejects bare --organize-imports without an on|off argument", () => {

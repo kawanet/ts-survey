@@ -28,8 +28,8 @@ export function parseFormatArgs(sub: string[], common: CommonArgs): FormatArgs |
         const a = sub[i]
         if (a === "--organize-imports") {
             const v = sub[i + 1]
-            if (v !== "on" && v !== "off") {
-                throw new Error(`--organize-imports expects 'on' or 'off'; got: ${v ?? "(missing)"}`)
+            if (v !== "on" && v !== "off" && v !== "only") {
+                throw new Error(`--organize-imports expects 'on', 'off', or 'only'; got: ${v ?? "(missing)"}`)
             }
             overrides.organizeImports = v
             i += 2
