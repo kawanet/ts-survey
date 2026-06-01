@@ -5,6 +5,7 @@
 import {reportToFormatStyle} from "../../common/format-style.ts"
 import {initProject, refineFormat, refineReport} from "../../index.ts"
 import {type CLI, NULL_SINK} from "../cli-io.ts"
+import {buildFormatTokens} from "../report/emit-ts-refine.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {mergeFormatStyles, overridesToFormatStyle, reportNamesForFormat} from "./format-options.ts"
 import {parseFormatArgs} from "./parse-format-args.ts"
@@ -29,6 +30,8 @@ export const formatCLI: CLI = async (ctx) => {
     if (args.applyOverrides.newLine === undefined && report.newLine?.newLine === "cr") {
         log.write("note: report recommends CR-only newlines; not applied (LS formatter supports LF/CRLF only)\n")
     }
+
+    log.write(`format: ${buildFormatTokens(format).join(" ")}\n`)
 
     // `--check` reports without writing, so it forces dry-run; the per-file
     // list and summary are already on the log, so only the fix hint is added.

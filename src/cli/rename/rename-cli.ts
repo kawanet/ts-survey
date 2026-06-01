@@ -5,6 +5,7 @@ import {reportToFormatStyle} from "../../common/format-style.ts"
 import {applyReportNames} from "../../common/report-names.ts"
 import {initProject, refineRename, refineReport, type TSR} from "../../index.ts"
 import {type CLI, NULL_SINK} from "../cli-io.ts"
+import {buildFormatTokens} from "../report/emit-ts-refine.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseRenameArgs} from "./parse-rename-args.ts"
 
@@ -19,6 +20,8 @@ export const renameCLI: CLI = async (ctx) => {
     // Survey, then reduce to the format subset refineRename actually needs.
     const report = await refineReport(project, {paths: [], reportNames, output: NULL_SINK, log})
     const format = reportToFormatStyle(report)
+    log.write(`format: ${buildFormatTokens(format).join(" ")}\n`)
+
     await refineRename(project, {from: args.from, to: args.to, file: paths[0] ?? null, dryRun: common.dryRun, format, log})
     return 0
 }
