@@ -8,7 +8,7 @@
 // and buildFormatFlags renders the same FormatStyle back to argv.
 
 import type {TSR} from "ts-refine"
-import {applyReportNames} from "../../report/report-names.ts"
+import {applyReportNames} from "../../common/report-names.ts"
 
 // A CLI override pins a field, so surveying the matching report is redundant;
 // organizeImports has no report. reportNamesForFormat trims the apply set to

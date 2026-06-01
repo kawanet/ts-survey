@@ -2,8 +2,8 @@
 // follows the codebase's conventions, then rename the exported identifier.
 
 import {initProject, refineRename, refineReport, type TSR} from "../../index.ts"
-import {reportToFormatOptions} from "../../recommend/format-style.ts"
-import {applyReportNames} from "../../report/report-names.ts"
+import {reportToFormatOptions} from "../../common/format-style.ts"
+import {applyReportNames} from "../../common/report-names.ts"
 import {type CLI, NULL_SINK} from "../cli-io.ts"
 import {resolvePaths} from "../resolve-paths.ts"
 import {parseRenameArgs} from "./parse-rename-args.ts"
