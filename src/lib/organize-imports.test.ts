@@ -31,8 +31,10 @@ describe("applyOrganizeImports semicolon cleanup", () => {
         assert.equal(run("export {} // c\n", REMOVE), "export {} // c\n")
     })
 
-    it("strips the `;` re-added with a trailing block comment", () => {
-        assert.equal(run("export {} /* c */\n", REMOVE), "export {} /* c */\n")
+    it("keeps the `;` under a trailing block comment (code may follow on the line)", () => {
+        // A `//` runs to EOL so its `;` is always droppable, but a block comment
+        // can precede same-line code that needs the `;`; leave block cases alone.
+        assert.equal(run("export {} /* c */\n", REMOVE), "export {}; /* c */\n")
     })
 
     it("strips the `;` on a comment-trailed import that is still in use", () => {

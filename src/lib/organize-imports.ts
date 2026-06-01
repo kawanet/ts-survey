@@ -15,22 +15,19 @@ export function applyOrganizeImports(sf: SourceFile, settings: FormatCodeSetting
     stripCommentDeferredSemicolons(sf, settings)
 }
 
-// organizeImports re-prints each declaration through the TS printer, which
-// commits a deferred `;` whenever a comment follows on the same line — even
-// under semicolons:Remove. Remove exactly that artifact: only under Remove,
-// only on an import/export declaration, and only when the trailing `;` is the
-// one immediately followed by a same-line comment. A `;` with anything else
-// after it is left untouched, so a genuinely required terminator never goes.
+// organizeImports' printer commits a deferred `;` when a token trails a
+// declaration on the same line, even under semicolons:Remove. Drop that
+// artifact only for a `//` comment, which runs to the line end so nothing can
+// follow; a block comment may precede same-line code that still needs the `;`.
 function stripCommentDeferredSemicolons(sf: SourceFile, settings: FormatCodeSettings): void {
     if (settings.semicolons !== ts.SemicolonPreference.Remove) return
     for (const stmt of sf.getStatements()) {
         if (!Node.isImportDeclaration(stmt) && !Node.isExportDeclaration(stmt)) continue
         const semicolon = stmt.getLastChild()
         if (!semicolon || semicolon.getKind() !== ts.SyntaxKind.SemicolonToken) continue
-        const semicolonLine = sf.getLineAndColumnAtPos(semicolon.getEnd()).line
-        const followedBySameLineComment = semicolon
+        const trailedByLineComment = semicolon
             .getTrailingCommentRanges()
-            .some((range) => sf.getLineAndColumnAtPos(range.getPos()).line === semicolonLine)
-        if (followedBySameLineComment) semicolon.replaceWithText("")
+            .some((range) => range.getKind() === ts.SyntaxKind.SingleLineCommentTrivia)
+        if (trailedByLineComment) semicolon.replaceWithText("")
     }
 }
